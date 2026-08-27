@@ -1,7 +1,9 @@
+#if DEBUG
 using System;
 
-[assembly: System.Reflection.Metadata.MetadataUpdateHandler(typeof(PSPSuite.Helper.HotReload))]
-namespace PSPSuite.Helper;
+[assembly: System.Reflection.Metadata.MetadataUpdateHandler(typeof(PSPSuite.Helpers.HotReload))]
+namespace PSPSuite.Helpers;
+
 public static class HotReload
 {
     public static event Action? OnCodeUpdated;
@@ -11,3 +13,4 @@ public static class HotReload
         OnCodeUpdated?.Invoke();
     }
 }
+#endif

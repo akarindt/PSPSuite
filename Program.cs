@@ -2,6 +2,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Themes.Fluent;
+using PSPSuite.Views.Windows;
 using System;
 
 namespace PSPSuite;

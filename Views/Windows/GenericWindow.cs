@@ -1,9 +1,9 @@
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
-using PSPSuite.Helper;
+using PSPSuite.Helpers;
 
-namespace PSPSuite;
+namespace PSPSuite.Views.Windows;
 
 public abstract class GenericWindow : Window
 {
@@ -13,7 +13,7 @@ public abstract class GenericWindow : Window
         MinWidth = Constants.MAIN_SCREEN_W;
         MinHeight = Constants.MAIN_SCREEN_H;
         RequestedThemeVariant = Constants.REQUESTED_THEME_VARIANT;
-        Background = Constants.BACKGROUND_COLOR;
+        Background = Constants.PRIMARY_BACKGROUND_COLOR;
         
         Loaded += (s, e) => BuildUI();
     }
