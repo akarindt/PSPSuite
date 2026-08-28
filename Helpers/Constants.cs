@@ -32,7 +32,17 @@ public static class Constants
     public static readonly GridLength DEFAULT_ROW_LENGTH = new(200);
     public static readonly Thickness DEFAULT_PADDING = new(10);
     public static readonly Thickness DEFAULT_DIVIDER_PADDING = new(0, 5);
-    public static readonly Thickness DEFAULT_MARGIN = new (0, 5);
+    public static readonly Thickness DEFAULT_MARGIN = new(0, 5);
     public static readonly double DEFAULT_THICKNESS = 1;
+    #endregion
+
+    #region Module order config
+    public enum MODULE_ORDER
+    {
+        MUSIC = 0,
+        VIDEO = 1,
+        PLAYLIST = 2,
+    }
+
     #endregion
 }

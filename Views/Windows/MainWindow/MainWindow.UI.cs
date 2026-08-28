@@ -38,22 +38,44 @@ public partial class MainWindow
         H_SPLITTER = 3
     }
 
+    #region Component declare
+    
+    private TextBlock _queueHeader = new();
+    private DividerControl _queuePanelDivider = new();
+    private ItemsRepeater _queueList = new();
+    private ScrollViewer _queueScrollViewer = new();
+    private Button _queueSendBtn = new();
+    private Border _queuePanel = new();
+    private TextBlock _logPanelHeader = new();
+    private DividerControl _logPanelDivider = new();
+    private SelectableTextBlock _logTextBlock = new();
+    private ScrollViewer _logScrollViewer = new();
+    private Border _logPanel = new();
+    private TabControl _mainTabControl = new();
+    private Border _mainPanel = new();
+    private GridSplitter _vSplitter = new();
+    private GridSplitter _hSplitter = new();
+    private Panel _cornerFiller = new();
+    private Grid _rootGrid = new();
+
+    #endregion
+
     public override void BuildUI()
     {
 
         #region Queue panel
-        var queueHeader = new TextBlock
+        _queueHeader = new TextBlock
         {
             Text = "Queue list",
             Foreground = Constants.PRIMARY_TEXT_COLOR,
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        DockPanel.SetDock(queueHeader, Dock.Top);
+        DockPanel.SetDock(_queueHeader, Dock.Top);
 
-        var queuePanelDivider = new DividerControl();
-        DockPanel.SetDock(queuePanelDivider, Dock.Top);
+        _queuePanelDivider = new DividerControl();
+        DockPanel.SetDock(_queuePanelDivider, Dock.Top);
 
-        var queueList = new ItemsRepeater
+        _queueList = new ItemsRepeater
         {
             Layout = new StackLayout
             {
@@ -61,9 +83,9 @@ public partial class MainWindow
             }
         };
 
-        var queueScrollViewer = new ScrollViewer { Content = queueList };
+        _queueScrollViewer = new ScrollViewer { Content = _queueList };
 
-        var queueSendBtn = new Button
+        _queueSendBtn = new Button
         {
             Content = "Send",
             Margin = Constants.DEFAULT_MARGIN,
@@ -80,9 +102,9 @@ public partial class MainWindow
             }
         };
 
-        DockPanel.SetDock(queueSendBtn, Dock.Bottom);
+        DockPanel.SetDock(_queueSendBtn, Dock.Bottom);
 
-        var queuePanel = new Border
+        _queuePanel = new Border
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
@@ -93,10 +115,10 @@ public partial class MainWindow
                 LastChildFill = true,
                 Children =
                 {
-                    queueHeader,
-                    queuePanelDivider,
-                    queueSendBtn,
-                    queueScrollViewer,
+                    _queueHeader,
+                    _queuePanelDivider,
+                    _queueSendBtn,
+                    _queueScrollViewer,
                 }
             }
         };
@@ -104,37 +126,37 @@ public partial class MainWindow
 
         #region Log panel
 
-        var logPanelHeader = new TextBlock
+        _logPanelHeader = new TextBlock
         {
             Text = "Activity Log",
             Foreground = Constants.PRIMARY_TEXT_COLOR,
             HorizontalAlignment = HorizontalAlignment.Stretch,
         };
-        DockPanel.SetDock(logPanelHeader, Dock.Top);
+        DockPanel.SetDock(_logPanelHeader, Dock.Top);
 
-        var logPanelDivider = new DividerControl();
-        DockPanel.SetDock(logPanelDivider, Dock.Top);
+        _logPanelDivider = new DividerControl();
+        DockPanel.SetDock(_logPanelDivider, Dock.Top);
 
-        var logTextBlock = new TextBlock
+        _logTextBlock = new SelectableTextBlock
         {
             Text = "",
             Foreground = Constants.PRIMARY_TEXT_COLOR,
             HorizontalAlignment = HorizontalAlignment.Stretch,
-            VerticalAlignment = VerticalAlignment.Stretch
+            VerticalAlignment = VerticalAlignment.Stretch,
         };
 
-        var logScrollViewer = new ScrollViewer { Content = logTextBlock };
+        _logScrollViewer = new ScrollViewer { Content = _logTextBlock };
 
         Console.SetOut(new TextWriterExtend(text =>
         {
             Dispatcher.Post(() =>
             {
-                logTextBlock.Text += text;
-                logScrollViewer.ScrollToEnd();
+                _logTextBlock.Text += text;
+                _logScrollViewer.ScrollToEnd();
             });
         }));
 
-        var logPanel = new Border
+        _logPanel = new Border
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
@@ -145,9 +167,9 @@ public partial class MainWindow
                 LastChildFill = true,
                 Children =
                 {
-                    logPanelHeader,
-                    logPanelDivider,
-                    logScrollViewer
+                    _logPanelHeader,
+                    _logPanelDivider,
+                    _logScrollViewer
                 },
             }
         };
@@ -155,29 +177,21 @@ public partial class MainWindow
         #endregion
 
         #region Main panel
-        var newTab = new TabItem
-        {
-            Header = "Dashboard Mới",
-            Content = new TextBlock {}
-        };
+        _mainTabControl = new TabControl {};
+        _mainTabControl.LoadModule();
 
-        var mainPanel = new Border
+
+        _mainPanel = new Border
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Child = new TabControl
-            {
-                Items =
-                {
-                    newTab
-                }
-            },
+            Child = _mainTabControl,
             Margin = MAIN_MARGIN_THICKNESS
         };
         #endregion
 
         #region Etcs
-        var vSplitter = new GridSplitter
+        _vSplitter = new GridSplitter
         {
             HorizontalAlignment = HorizontalAlignment.Center,
             VerticalAlignment = VerticalAlignment.Stretch,
@@ -186,7 +200,7 @@ public partial class MainWindow
         };
 
 
-        var hSplitter = new GridSplitter
+        _hSplitter = new GridSplitter
         {
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Center,
@@ -194,9 +208,9 @@ public partial class MainWindow
             Background = Constants.PRIMARY_BACKGROUND_COLOR
         };
 
-        var cornerFiller = new Panel { Background = Constants.PRIMARY_BACKGROUND_COLOR };
+        _cornerFiller = new Panel { Background = Constants.PRIMARY_BACKGROUND_COLOR };
 
-        var rootGrid = new Grid
+        _rootGrid = new Grid
         {
             ColumnDefinitions =
             [
@@ -212,14 +226,14 @@ public partial class MainWindow
             ],
         };
 
-        rootGrid.Children.AddChildren(queuePanel, (int)GRID_COL_SETTING.QUEUE, (int)GRID_ROW_SETTING.QUEUE);
-        rootGrid.Children.AddChildren(logPanel, (int)GRID_COL_SETTING.LOG, (int)GRID_ROW_SETTING.LOG, (int)GRID_SPAN_COL_SETTING.LOG);
-        rootGrid.Children.AddChildren(mainPanel, (int)GRID_COL_SETTING.MAIN, (int)GRID_ROW_SETTING.MAIN);
-        rootGrid.Children.AddChildren(vSplitter, (int)GRID_COL_SETTING.V_SPLITTER, (int)GRID_ROW_SETTING.V_SPLITTER);
-        rootGrid.Children.AddChildren(hSplitter, (int)GRID_COL_SETTING.H_SPLITTER, (int)GRID_ROW_SETTING.H_SPLITTER, (int)GRID_SPAN_COL_SETTING.H_SPLITTER);
-        rootGrid.Children.AddChildren(cornerFiller, (int)GRID_COL_SETTING.CORNER_FILTER, (int)GRID_ROW_SETTING.CORNER_FILTER);
+        _rootGrid.Children.AddChildren(_queuePanel, (int)GRID_COL_SETTING.QUEUE, (int)GRID_ROW_SETTING.QUEUE);
+        _rootGrid.Children.AddChildren(_logPanel, (int)GRID_COL_SETTING.LOG, (int)GRID_ROW_SETTING.LOG, (int)GRID_SPAN_COL_SETTING.LOG);
+        _rootGrid.Children.AddChildren(_mainPanel, (int)GRID_COL_SETTING.MAIN, (int)GRID_ROW_SETTING.MAIN);
+        _rootGrid.Children.AddChildren(_vSplitter, (int)GRID_COL_SETTING.V_SPLITTER, (int)GRID_ROW_SETTING.V_SPLITTER);
+        _rootGrid.Children.AddChildren(_hSplitter, (int)GRID_COL_SETTING.H_SPLITTER, (int)GRID_ROW_SETTING.H_SPLITTER, (int)GRID_SPAN_COL_SETTING.H_SPLITTER);
+        _rootGrid.Children.AddChildren(_cornerFiller, (int)GRID_COL_SETTING.CORNER_FILTER, (int)GRID_ROW_SETTING.CORNER_FILTER);
         #endregion
 
-        Content = rootGrid;
+        Content = _rootGrid;
     }
 }

@@ -16,14 +16,14 @@ public abstract class GenericWindow : Window
         Background = Constants.PRIMARY_BACKGROUND_COLOR;
         
         Loaded += (s, e) => BuildUI();
+
+#if DEBUG
+        Loaded += (s, e) => HotReload.OnCodeUpdated += ReloadUI;
+        Unloaded += (s, e) => HotReload.OnCodeUpdated -= ReloadUI;
+#endif
     }
 
-    protected override void OnInitialized()
-    {
-        base.OnInitialized();
-        HotReload.OnCodeUpdated += ReloadUI;
-    }
-
+#if DEBUG
     private void ReloadUI()
     {
         _ = Dispatcher.InvokeAsync(() =>
@@ -32,6 +32,7 @@ public abstract class GenericWindow : Window
             BuildUI();
         });
     }
+#endif
 
     public abstract void BuildUI();
 }
