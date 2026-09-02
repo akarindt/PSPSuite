@@ -19,7 +19,7 @@ public partial class MainWindow : GenericWindow
         };
     }
 
-    public async Task OnBrowseFolderClick(object? sender, RoutedEventArgs e)
+    public async Task BrowseBtn_Clicked(object? sender, RoutedEventArgs e)
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;

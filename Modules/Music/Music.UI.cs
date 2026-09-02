@@ -86,6 +86,8 @@ public partial class Music : GenericModule
             VerticalAlignment = VerticalAlignment.Center,
         };
 
+        _addLocalBtn.Click += async (s, e) => await AddLocalBtn_Clicked(s, e);
+
         Grid.SetColumn(_searchBtn, 0);
         Grid.SetColumn(_addLocalBtn, 1);
         _buttonGrid.Children.Add(_searchBtn);

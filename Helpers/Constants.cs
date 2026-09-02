@@ -1,6 +1,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using Avalonia.Styling;
 
 namespace PSPSuite.Helpers;
@@ -43,6 +44,15 @@ public static class Constants
         VIDEO = 1,
         PLAYLIST = 2,
     }
+    #endregion
 
+
+    #region Custom file types
+    public static readonly FilePickerFileType FILE_TYPE_AUDIO_ALL = new("All audios")
+    {
+        Patterns = ["*.mp3", "*.wav", "*.wma", "*.aac", "*.ogg", "*.flac", "*.m4a"],
+        AppleUniformTypeIdentifiers = ["public.audio"],
+        MimeTypes = ["audio/*"]
+    };
     #endregion
 }

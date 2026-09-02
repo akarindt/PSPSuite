@@ -238,7 +238,7 @@ public partial class MainWindow
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        _browseBtn.Click += async (s, e) => await OnBrowseFolderClick(s, e);
+        _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
 
         _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PATH_GRID_COL.LABEL, _pathGridRow);
         _pathContainer.Children.AddChildren(_drivePath, (int)PATH_GRID_COL.PATH_INPUT, _pathGridRow);
