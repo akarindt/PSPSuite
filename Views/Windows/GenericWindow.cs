@@ -15,6 +15,7 @@ public abstract class GenericWindow : Window
         RequestedThemeVariant = Constants.REQUESTED_THEME_VARIANT;
         Background = Constants.PRIMARY_BACKGROUND_COLOR;
         
+        WindowState = WindowState.Maximized;
         Loaded += (s, e) => BuildUI();
 
 #if DEBUG

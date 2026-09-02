@@ -2,6 +2,7 @@ using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
+using Avalonia.Threading;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
 
@@ -9,9 +10,14 @@ namespace PSPSuite.Views.Windows;
 
 public partial class MainWindow
 {
-    private static readonly Thickness QUEUE_MARGIN_THICKNESS = new(0, 10, 5, 0);
-    private static readonly Thickness LOG_MARGIN_THICKNESS = new(5, 0, 5, 5);
-    private static readonly Thickness MAIN_MARGIN_THICKNESS = new(5, 10, 0, 0);
+    private readonly Thickness _queueMarginThickness = new(0, 10, 5, 0);
+    private readonly Thickness _logMarginThickness = new(5, 0, 5, 5);
+    private readonly Thickness _mainMarginThickness = new(5, 10, 0, 0);
+
+    private readonly double _pathLabelWidth = 50.0;
+    private readonly double _browseBtnWidth = 100.0;
+    private readonly double _pathGridSpacing = 10.0;
+
     private enum GRID_ROW_SETTING
     {
         QUEUE = 0,
@@ -38,8 +44,17 @@ public partial class MainWindow
         H_SPLITTER = 3
     }
 
+    private enum PATH_GRID_COL
+    {
+        LABEL = 0,
+        PATH_INPUT = 1,
+        BROWSE_BUTTON = 2
+    }
+
+    private readonly int _pathGridRow = 0;
+
     #region Component declare
-    
+
     private TextBlock _queueHeader = new();
     private DividerControl _queuePanelDivider = new();
     private ItemsRepeater _queueList = new();
@@ -57,7 +72,10 @@ public partial class MainWindow
     private GridSplitter _hSplitter = new();
     private Panel _cornerFiller = new();
     private Grid _rootGrid = new();
-
+    private Grid _pathContainer = new();
+    private TextBox _drivePath = new();
+    private Button _browseBtn = new();
+    private DockPanel _mainDock = new();
     #endregion
 
     public override void BuildUI()
@@ -108,7 +126,7 @@ public partial class MainWindow
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Margin = QUEUE_MARGIN_THICKNESS,
+            Margin = _queueMarginThickness,
             Padding = Constants.DEFAULT_PADDING,
             Child = new DockPanel
             {
@@ -160,7 +178,7 @@ public partial class MainWindow
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Margin = LOG_MARGIN_THICKNESS,
+            Margin = _logMarginThickness,
             Padding = Constants.DEFAULT_PADDING,
             Child = new DockPanel
             {
@@ -177,16 +195,76 @@ public partial class MainWindow
         #endregion
 
         #region Main panel
-        _mainTabControl = new TabControl {};
+
+        _pathContainer = new Grid
+        {
+            ColumnDefinitions = [
+                new ColumnDefinition(new GridLength(_pathLabelWidth)),
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(new GridLength(_browseBtnWidth)),
+            ],
+            RowDefinitions = [
+                new RowDefinition(GridLength.Auto),
+            ],
+            ColumnSpacing = _pathGridSpacing,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = Constants.DEFAULT_MARGIN
+        };
+
+        _drivePath = new TextBox
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            IsReadOnly = true,
+            Focusable = false,
+            IsTabStop = false,
+            IsHitTestVisible = false,
+            Background = Constants.PRIMARY_BACKGROUND_COLOR
+        };
+
+        _browseBtn = new Button
+        {
+            Content = "Browse",
+            Width = _browseBtnWidth,
+            Background = Constants.PRIMARY_BUTTON_COLOR,
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Resources =
+            {
+                ["ButtonBackgroundPointerOver"] = Constants.PRIMARY_HOVER_COLOR,
+                ["ButtonBackgroundPressed"] = Constants.PRIMARY_HOVER_COLOR
+            },
+            VerticalAlignment = VerticalAlignment.Center,
+        };
+
+        _browseBtn.Click += async (s, e) => await OnBrowseFolderClick(s, e);
+
+        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PATH_GRID_COL.LABEL, _pathGridRow);
+        _pathContainer.Children.AddChildren(_drivePath, (int)PATH_GRID_COL.PATH_INPUT, _pathGridRow);
+        _pathContainer.Children.AddChildren(_browseBtn, (int)PATH_GRID_COL.BROWSE_BUTTON, _pathGridRow);
+
+        _mainTabControl = new TabControl { };
         _mainTabControl.LoadModule();
 
+        DockPanel.SetDock(_pathContainer, Dock.Top);
+
+        _mainDock = new DockPanel
+        {
+            Children =
+            {
+                _pathContainer,
+                _mainTabControl
+            },
+        };
 
         _mainPanel = new Border
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Child = _mainTabControl,
-            Margin = MAIN_MARGIN_THICKNESS
+            Child = _mainDock,
+            Margin = _mainMarginThickness,
+            Padding = Constants.DEFAULT_PADDING
         };
         #endregion
 
@@ -234,6 +312,8 @@ public partial class MainWindow
         _rootGrid.Children.AddChildren(_cornerFiller, (int)GRID_COL_SETTING.CORNER_FILTER, (int)GRID_ROW_SETTING.CORNER_FILTER);
         #endregion
 
+
+        UsbWatcher.InitUsbListener();
         Content = _rootGrid;
     }
 }
