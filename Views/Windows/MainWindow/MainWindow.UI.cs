@@ -1,22 +1,28 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
 using Avalonia.Layout;
+using Avalonia.Media;
 using Avalonia.Threading;
+using PSPSuite.Data;
 using PSPSuite.Helpers;
+using PSPSuite.Modules;
 using PSPSuite.Views.Components;
 
 namespace PSPSuite.Views.Windows;
 
 public partial class MainWindow
 {
-    private readonly Thickness _queueMarginThickness = new(0, 10, 5, 0);
-    private readonly Thickness _logMarginThickness = new(5, 0, 5, 5);
-    private readonly Thickness _mainMarginThickness = new(5, 10, 0, 0);
-
-    private readonly double _pathLabelWidth = 50.0;
-    private readonly double _browseBtnWidth = 100.0;
-    private readonly double _pathGridSpacing = 10.0;
+    private readonly Thickness QUEUE_MARGIN_THICKNESS = new(0, 10, 5, 0);
+    private readonly Thickness LOG_MARGIN_THICKNESS = new(5, 0, 5, 5);
+    private readonly Thickness MAIN_MARGIN_THICKNESS = new(5, 10, 0, 0);
+    private readonly Thickness BROWSE_BTN_MARGIN_THICKNESS = new(0, 0, 5, 0);
+    private readonly Thickness PATH_CONTAINER_MARGIN_THICKNESS = new(15, 0);
+    private readonly Thickness SEND_BTN_MARGIN_THICKNESS = new(5, 10);
 
     private enum GRID_ROW_SETTING
     {
@@ -25,7 +31,8 @@ public partial class MainWindow
         MAIN = 0,
         V_SPLITTER = 0,
         H_SPLITTER = 1,
-        CORNER_FILTER = 1
+        CORNER_FILTER = 1,
+        PATH = 0,
     }
 
     private enum GRID_COL_SETTING
@@ -35,7 +42,10 @@ public partial class MainWindow
         MAIN = 0,
         V_SPLITTER = 1,
         H_SPLITTER = 0,
-        CORNER_FILTER = 1
+        CORNER_FILTER = 1,
+        PATH_LABEL = 0,
+        PATH_INPUT = 1,
+        PATH_BROWSE_BUTTON = 2
     }
 
     private enum GRID_SPAN_COL_SETTING
@@ -43,15 +53,6 @@ public partial class MainWindow
         LOG = 3,
         H_SPLITTER = 3
     }
-
-    private enum PATH_GRID_COL
-    {
-        LABEL = 0,
-        PATH_INPUT = 1,
-        BROWSE_BUTTON = 2
-    }
-
-    private readonly int _pathGridRow = 0;
 
     #region Component declare
 
@@ -78,6 +79,8 @@ public partial class MainWindow
     private DockPanel _mainDock = new();
     #endregion
 
+    private readonly ObservableCollection<QueueItem> _queueListData = new();
+
     public override void BuildUI()
     {
 
@@ -93,12 +96,28 @@ public partial class MainWindow
         _queuePanelDivider = new DividerControl();
         DockPanel.SetDock(_queuePanelDivider, Dock.Top);
 
+        var elementFactory = new RecyclingElementFactory();
+        elementFactory.SelectTemplateKey += (sender, args) =>
+        {
+            args.TemplateKey = "QueueItemKey";
+        };
+        elementFactory.Templates["QueueItemKey"] = new FuncDataTemplate<QueueItem>((queue, namescope) =>
+        {
+            return new QueueItemControl
+            {
+                QueueItem = queue
+            };
+        });
+
+
         _queueList = new ItemsRepeater
         {
+            ItemsSource = _queueListData,
             Layout = new StackLayout
             {
-
-            }
+                Spacing = Constants.DEFAULT_ITEM_REPEATER_SPACING
+            },
+            ItemTemplate = elementFactory
         };
 
         _queueScrollViewer = new ScrollViewer { Content = _queueList };
@@ -106,7 +125,7 @@ public partial class MainWindow
         _queueSendBtn = new Button
         {
             Content = "Send",
-            Margin = Constants.DEFAULT_MARGIN,
+            Margin = SEND_BTN_MARGIN_THICKNESS,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             HorizontalContentAlignment = HorizontalAlignment.Center,
             VerticalContentAlignment = VerticalAlignment.Center,
@@ -126,7 +145,7 @@ public partial class MainWindow
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Margin = _queueMarginThickness,
+            Margin = QUEUE_MARGIN_THICKNESS,
             Padding = Constants.DEFAULT_PADDING,
             Child = new DockPanel
             {
@@ -178,7 +197,7 @@ public partial class MainWindow
         {
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
-            Margin = _logMarginThickness,
+            Margin = LOG_MARGIN_THICKNESS,
             Padding = Constants.DEFAULT_PADDING,
             Child = new DockPanel
             {
@@ -199,17 +218,17 @@ public partial class MainWindow
         _pathContainer = new Grid
         {
             ColumnDefinitions = [
-                new ColumnDefinition(new GridLength(_pathLabelWidth)),
+                new ColumnDefinition(Constants.DEFAULT_LABEL_WIDTH),
                 new ColumnDefinition(GridLength.Star),
-                new ColumnDefinition(new GridLength(_browseBtnWidth)),
+                new ColumnDefinition(GridLength.Auto),
             ],
             RowDefinitions = [
                 new RowDefinition(GridLength.Auto),
             ],
-            ColumnSpacing = _pathGridSpacing,
+            ColumnSpacing = Constants.DEFAULT_COLUMN_SPACING,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Top,
-            Margin = Constants.DEFAULT_MARGIN
+            Margin = PATH_CONTAINER_MARGIN_THICKNESS
         };
 
         _drivePath = new TextBox
@@ -225,7 +244,6 @@ public partial class MainWindow
         _browseBtn = new Button
         {
             Content = "Browse",
-            Width = _browseBtnWidth,
             Background = Constants.PRIMARY_BUTTON_COLOR,
             Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
             HorizontalContentAlignment = HorizontalAlignment.Center,
@@ -236,13 +254,14 @@ public partial class MainWindow
                 ["ButtonBackgroundPressed"] = Constants.PRIMARY_HOVER_COLOR
             },
             VerticalAlignment = VerticalAlignment.Center,
+            Margin = BROWSE_BTN_MARGIN_THICKNESS
         };
 
         _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
 
-        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PATH_GRID_COL.LABEL, _pathGridRow);
-        _pathContainer.Children.AddChildren(_drivePath, (int)PATH_GRID_COL.PATH_INPUT, _pathGridRow);
-        _pathContainer.Children.AddChildren(_browseBtn, (int)PATH_GRID_COL.BROWSE_BUTTON, _pathGridRow);
+        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)GRID_COL_SETTING.PATH_LABEL, (int)GRID_ROW_SETTING.PATH);
+        _pathContainer.Children.AddChildren(_drivePath, (int)GRID_COL_SETTING.PATH_INPUT, (int)GRID_ROW_SETTING.PATH);
+        _pathContainer.Children.AddChildren(_browseBtn, (int)GRID_COL_SETTING.PATH_BROWSE_BUTTON, (int)GRID_ROW_SETTING.PATH);
 
         _mainTabControl = new TabControl { };
         _mainTabControl.LoadModule();
@@ -263,7 +282,7 @@ public partial class MainWindow
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Background = Constants.CONTAINER_BACKGROUND_COLOR,
             Child = _mainDock,
-            Margin = _mainMarginThickness,
+            Margin = MAIN_MARGIN_THICKNESS,
             Padding = Constants.DEFAULT_PADDING
         };
         #endregion
@@ -314,6 +333,41 @@ public partial class MainWindow
 
 
         UsbWatcher.InitUsbListener();
+        this.SubscribeModuleEvents();
+
         Content = _rootGrid;
+    }
+
+    public override void SubscribeModuleEvents()
+    {
+        foreach (var item in _mainTabControl.Items)
+        {
+            if (item is TabItem tab && tab.Content is GenericModule module)
+            {
+                module.SendToQueueRequested += OnSendToQueueRequested;
+            }
+        }
+    }
+
+    public override void OnSendToQueueRequested(object? sender, IList items)
+    {
+        _queueList.ItemsSource = null;
+        _queueListData.Clear();
+        _queueList.ItemsSource = _queueListData;
+
+        if (items is List<Audio> audioList)
+        {
+            foreach (var audio in audioList)
+            {
+                _queueListData.Add(new QueueItem
+                {
+                    FileName = audio.FileName,
+                    FilePath = audio.FilePath,
+                    FileType = QueueItemType.MUSIC,
+                    Status = QueueItemStatus.READY,
+                    IsLocal = audio.IsLocal
+                });
+            }
+        }
     }
 }

@@ -1,3 +1,4 @@
+using System.Collections;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Styling;
@@ -36,4 +37,6 @@ public abstract class GenericWindow : Window
 #endif
 
     public abstract void BuildUI();
+    public abstract void SubscribeModuleEvents();
+    public abstract void OnSendToQueueRequested(object? sender, IList items);
 }

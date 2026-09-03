@@ -12,7 +12,6 @@ public static class Constants
     public static readonly string APP_NAME = "PSPSuite";
     public static readonly int MAIN_SCREEN_W = 1270;
     public static readonly int MAIN_SCREEN_H = 800;
-
     #endregion
 
     #region Colors
@@ -35,6 +34,10 @@ public static class Constants
     public static readonly Thickness DEFAULT_DIVIDER_PADDING = new(0, 5);
     public static readonly Thickness DEFAULT_MARGIN = new(0, 5);
     public static readonly double DEFAULT_THICKNESS = 1;
+    public static readonly double DEFAULT_COLUMN_SPACING = 10.0;
+    public static readonly GridLength DEFAULT_LABEL_WIDTH = new(50.0);
+    public static readonly double DEFAULT_ROW_SPACING = 10.0;
+    public static readonly double DEFAULT_ITEM_REPEATER_SPACING = 5.0;
     #endregion
 
     #region Module order config

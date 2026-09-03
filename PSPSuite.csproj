@@ -19,6 +19,7 @@
     </PackageReference>
     <PackageReference Include="FluentIcons.Avalonia" Version="2.1.337" />
     <PackageReference Include="System.Management" Version="10.0.11" />
+    <PackageReference Include="TagLibSharp" Version="2.3.0" />
     <PackageReference Include="YoutubeDLSharp" Version="1.2.0" />
   </ItemGroup>
 
