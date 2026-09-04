@@ -1,9 +1,10 @@
 using System;
 using Avalonia.Media.Imaging;
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PSPSuite.Data;
 
-public class Audio
+public partial class Audio : ObservableObject
 {
     public string FileName { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;
@@ -14,5 +15,7 @@ public class Audio
     public string ContributeArtist { get; set; } = string.Empty;
     public string Album { get; set; } = string.Empty;
     public bool IsLocal { get; set; }
-    public bool IsChecked { get; set; }
+
+    [ObservableProperty]
+    private bool _isChecked;
 }

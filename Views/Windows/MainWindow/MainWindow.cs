@@ -35,4 +35,13 @@ public partial class MainWindow : GenericWindow
         if (folder == null) return;
         _drivePath.Text = folder.Path.LocalPath;
     }
+
+    public async Task QueueSendBtn_Clicked(object? sender, RoutedEventArgs args)
+    {
+        if (_queueListData.Count <= 0)
+        {
+            await MessageBox.Err("Error", "Queue is empty!");
+            return;
+        }
+    }
 }

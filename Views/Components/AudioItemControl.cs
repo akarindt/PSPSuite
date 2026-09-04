@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
@@ -22,7 +23,7 @@ public class AudioItemControl : Control
     private readonly Border _rootBorder;
     private readonly CheckBox _checkBox = new();
 
-    private enum GRID_COL_SETTING
+    private enum AudioItemGridColSetting
     {
         CHECK_BOX = 0,
         INFO_SECTION = 1,
@@ -94,8 +95,8 @@ public class AudioItemControl : Control
             ]
         };
 
-        Grid.SetColumn(infoStack, (int)GRID_COL_SETTING.INFO_SECTION);
-        Grid.SetColumn(rightStack, (int)GRID_COL_SETTING.DURATION_SIZE);
+        Grid.SetColumn(infoStack, (int)AudioItemGridColSetting.INFO_SECTION);
+        Grid.SetColumn(rightStack, (int)AudioItemGridColSetting.DURATION_SIZE);
 
         grid.Children.Add(infoStack);
         grid.Children.Add(rightStack);
@@ -115,6 +116,8 @@ public class AudioItemControl : Control
                 AudioItem.IsChecked = _checkBox.IsChecked ?? false;
             }
         };
+
+        _checkBox.Bind(CheckBox.IsCheckedProperty, new Binding("IsChecked") { Mode = BindingMode.TwoWay });
 
         _rootBorder = new Border
         {
@@ -163,6 +166,7 @@ public class AudioItemControl : Control
             _artistAlbumText.Text = "Unknown Artist • Unknown Album";
             _fileSizeText.Text = "0 B";
             _durationText.Text = "00:00";
+            _checkBox.IsChecked = false;
         }
     }
 

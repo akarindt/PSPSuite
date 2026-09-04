@@ -14,6 +14,7 @@ using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
+using PSPSuite.Views.Components;
 
 namespace PSPSuite.Modules;
 
@@ -24,21 +25,21 @@ public partial class Music
 
     }
 
-    public void ToQueueBtn_Clicked(object? sender, RoutedEventArgs args)
+    private void ToQueueBtn_Clicked(object? sender, RoutedEventArgs args)
     {
         var selectedAudios = _audioList.Where(a => a.IsChecked).ToList();
         if (selectedAudios.Count <= 0) return;
         RaiseSendToQueue(selectedAudios);
     }
 
-    public void ClearListBtn_Clicked(object? sender, RoutedEventArgs args)
+    private void ClearListBtn_Clicked(object? sender, RoutedEventArgs args)
     {
         _itemsRepeater.ItemsSource = null;
         _audioList.Clear();
         _itemsRepeater.ItemsSource = _audioList;
     }
 
-    public async Task AddLocalBtn_Clicked(object? sender, RoutedEventArgs agrs)
+    private async Task AddLocalBtn_Clicked(object? sender, RoutedEventArgs agrs)
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
@@ -50,6 +51,7 @@ public partial class Music
             FileTypeFilter = [Constants.FILE_TYPE_AUDIO_ALL]
         });
 
+        _selectAllCheckBox.IsChecked = false;
         if (files.Count <= 0) return;
 
         var fileInfos = new Audio[files.Count];
@@ -113,5 +115,24 @@ public partial class Music
         GCSettings.LargeObjectHeapCompactionMode = GCLargeObjectHeapCompactionMode.CompactOnce;
         GC.Collect(generation: 2, GCCollectionMode.Forced, blocking: true, compacting: true);
         GC.WaitForPendingFinalizers();
+    }
+
+    private void ItemsRepeater_ElementPrepared(object? sender, ItemsRepeaterElementPreparedEventArgs args)
+    {
+        if (args.Element is AudioItemControl control && _audioList != null && args.Index < _audioList.Count)
+        {
+            var currentAudio = _audioList[args.Index];
+            control.DataContext = currentAudio;
+            control.AudioItem = currentAudio;
+        }
+    }
+
+    private void SelectAllCheckBox_IsCheckedChanged(object? sender, RoutedEventArgs args)
+    {
+        if(_audioList.Count <= 0) return;
+        foreach(var audio in _audioList)
+        {
+            audio.IsChecked = _selectAllCheckBox.IsChecked ?? false;
+        }
     }
 }

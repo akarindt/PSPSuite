@@ -11,7 +11,7 @@ using PSPSuite.Views.Components;
 
 namespace PSPSuite.Modules;
 
-[TabModule("Music", (int)Constants.MODULE_ORDER.MUSIC)]
+[TabModule("Music", (int)Constants.ModuleOrder.MUSIC)]
 public partial class Music : GenericModule
 {
 
@@ -26,18 +26,21 @@ public partial class Music : GenericModule
     private ScrollViewer _scrollViewer = new();
     private Button _toQueueBtn = new();
     private Button _clearListBtn = new();
-    private enum GRID_ROW_SETTING
+    private CheckBox _selectAllCheckBox = new();
+    
+    private enum MusicGridRowSetting
     {
         URL_CONTAINER = 0,
-        SCROLL_VIEWER = 1,
+        SELECT_ALL_CHK_BOX = 1,
+        SCROLL_VIEWER = 2,
+        CLEAR_SEND_BTN_GRID = 3,
         URL_ROW = 0,
         BUTTON_ROW = 0,
         CLEAR_BTN = 0,
         TO_QUEUE_BTN = 0,
-        CLEAR_SEND_BTN_GRID = 2
     }
 
-    private enum GRID_COL_SETTING
+    private enum MusicGridColSetting
     {
         URL_LABEL = 0,
         URL_TEXTBOX = 1,
@@ -121,13 +124,13 @@ public partial class Music : GenericModule
 
         _addLocalBtn.Click += async (s, e) => await AddLocalBtn_Clicked(s, e);
 
-        _buttonGrid.Children.AddChildren(_searchBtn, (int)GRID_COL_SETTING.SEARCH_BTN, (int)GRID_ROW_SETTING.BUTTON_ROW);
-        _buttonGrid.Children.AddChildren(_addLocalBtn, (int)GRID_COL_SETTING.ADD_LOCAL_BTN, (int)GRID_ROW_SETTING.BUTTON_ROW);
+        _buttonGrid.Children.AddChildren(_searchBtn, (int)MusicGridColSetting.SEARCH_BTN, (int)MusicGridRowSetting.BUTTON_ROW);
+        _buttonGrid.Children.AddChildren(_addLocalBtn, (int)MusicGridColSetting.ADD_LOCAL_BTN, (int)MusicGridRowSetting.BUTTON_ROW);
 
         var label = new TextBlock { Text = "Url", VerticalAlignment = VerticalAlignment.Center };
-        _urlContainer.Children.AddChildren(label, (int)GRID_COL_SETTING.URL_LABEL, (int)GRID_ROW_SETTING.URL_ROW);
-        _urlContainer.Children.AddChildren(_urlTextBox, (int)GRID_COL_SETTING.URL_TEXTBOX, (int)GRID_ROW_SETTING.URL_ROW);
-        _urlContainer.Children.AddChildren(_buttonGrid, (int)GRID_COL_SETTING.BUTTON_GRID, (int)GRID_ROW_SETTING.URL_ROW);
+        _urlContainer.Children.AddChildren(label, (int)MusicGridColSetting.URL_LABEL, (int)MusicGridRowSetting.URL_ROW);
+        _urlContainer.Children.AddChildren(_urlTextBox, (int)MusicGridColSetting.URL_TEXTBOX, (int)MusicGridRowSetting.URL_ROW);
+        _urlContainer.Children.AddChildren(_buttonGrid, (int)MusicGridColSetting.BUTTON_GRID, (int)MusicGridRowSetting.URL_ROW);
 
         var _clearSendBtnGrid = new Grid
         {
@@ -177,8 +180,8 @@ public partial class Music : GenericModule
         };
         _toQueueBtn.Click += ToQueueBtn_Clicked;
 
-        _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)GRID_COL_SETTING.CLEAR_BTN, (int)GRID_ROW_SETTING.CLEAR_BTN);
-        _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)GRID_COL_SETTING.TO_QUEUE_BTN, (int)GRID_ROW_SETTING.TO_QUEUE_BTN);
+        _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)MusicGridColSetting.CLEAR_BTN, (int)MusicGridRowSetting.CLEAR_BTN);
+        _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)MusicGridColSetting.TO_QUEUE_BTN, (int)MusicGridRowSetting.TO_QUEUE_BTN);
 
 
         var elementFactory = new RecyclingElementFactory();
@@ -188,11 +191,7 @@ public partial class Music : GenericModule
         };
         elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Audio>((audio, namescope) =>
         {
-            return new AudioItemControl
-            {
-                AudioItem = audio,
-                DataContext = audio
-            };
+            return new AudioItemControl();
         });
 
         _itemsRepeater = new ItemsRepeater
@@ -201,6 +200,7 @@ public partial class Music : GenericModule
             Layout = new StackLayout { Spacing = Constants.DEFAULT_ITEM_REPEATER_SPACING },
             ItemTemplate = elementFactory
         };
+        _itemsRepeater.ElementPrepared += ItemsRepeater_ElementPrepared;
 
         _scrollViewer = new ScrollViewer
         {
@@ -209,9 +209,16 @@ public partial class Music : GenericModule
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
         };
 
+        _selectAllCheckBox = new CheckBox
+        {
+            Content = "Select all",
+        };
+        _selectAllCheckBox.IsCheckedChanged += SelectAllCheckBox_IsCheckedChanged;
+
         var mainGrid = new Grid
         {
             RowDefinitions = [
+                new RowDefinition(GridLength.Auto),
                 new RowDefinition(GridLength.Auto),
                 new RowDefinition(GridLength.Star),
                 new RowDefinition(GridLength.Auto)
@@ -219,9 +226,10 @@ public partial class Music : GenericModule
             RowSpacing = Constants.DEFAULT_ROW_SPACING
         };
 
-        mainGrid.Children.AddChildren(_urlContainer, (int)GRID_COL_SETTING.MAIN_COL, (int)GRID_ROW_SETTING.URL_CONTAINER);
-        mainGrid.Children.AddChildren(_scrollViewer, (int)GRID_COL_SETTING.MAIN_COL, (int)GRID_ROW_SETTING.SCROLL_VIEWER);
-        mainGrid.Children.AddChildren(_clearSendBtnGrid, (int)GRID_COL_SETTING.MAIN_COL, (int)GRID_ROW_SETTING.CLEAR_SEND_BTN_GRID);
+        mainGrid.Children.AddChildren(_urlContainer, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.URL_CONTAINER);
+        mainGrid.Children.AddChildren(_selectAllCheckBox, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.SELECT_ALL_CHK_BOX);
+        mainGrid.Children.AddChildren(_scrollViewer, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.SCROLL_VIEWER);
+        mainGrid.Children.AddChildren(_clearSendBtnGrid, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.CLEAR_SEND_BTN_GRID);
 
         Content = new Border
         {

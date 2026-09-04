@@ -8,6 +8,7 @@ using Avalonia.Controls.Templates;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Threading;
+using DialogHostAvalonia;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
 using PSPSuite.Modules;
@@ -24,7 +25,7 @@ public partial class MainWindow
     private readonly Thickness PATH_CONTAINER_MARGIN_THICKNESS = new(15, 0);
     private readonly Thickness SEND_BTN_MARGIN_THICKNESS = new(5, 10);
 
-    private enum GRID_ROW_SETTING
+    private enum GridRowSetting
     {
         QUEUE = 0,
         LOG = 2,
@@ -35,7 +36,7 @@ public partial class MainWindow
         PATH = 0,
     }
 
-    private enum GRID_COL_SETTING
+    private enum GridColSetting
     {
         QUEUE = 2,
         LOG = 0,
@@ -48,13 +49,11 @@ public partial class MainWindow
         PATH_BROWSE_BUTTON = 2
     }
 
-    private enum GRID_SPAN_COL_SETTING
+    private enum GridSpanColSetting
     {
         LOG = 3,
         H_SPLITTER = 3
     }
-
-    #region Component declare
 
     private TextBlock _queueHeader = new();
     private DividerControl _queuePanelDivider = new();
@@ -77,14 +76,12 @@ public partial class MainWindow
     private TextBox _drivePath = new();
     private Button _browseBtn = new();
     private DockPanel _mainDock = new();
-    #endregion
 
     private readonly ObservableCollection<QueueItem> _queueListData = new();
 
     public override void BuildUI()
     {
 
-        #region Queue panel
         _queueHeader = new TextBlock
         {
             Text = "Queue list",
@@ -138,6 +135,7 @@ public partial class MainWindow
                 ["ButtonBackgroundPressed"] = Constants.PRIMARY_HOVER_COLOR
             }
         };
+        _queueSendBtn.Click += async (s, e) => await QueueSendBtn_Clicked(s, e);
 
         DockPanel.SetDock(_queueSendBtn, Dock.Bottom);
 
@@ -159,9 +157,6 @@ public partial class MainWindow
                 }
             }
         };
-        #endregion
-
-        #region Log panel
 
         _logPanelHeader = new TextBlock
         {
@@ -211,10 +206,6 @@ public partial class MainWindow
             }
         };
 
-        #endregion
-
-        #region Main panel
-
         _pathContainer = new Grid
         {
             ColumnDefinitions = [
@@ -259,9 +250,9 @@ public partial class MainWindow
 
         _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
 
-        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)GRID_COL_SETTING.PATH_LABEL, (int)GRID_ROW_SETTING.PATH);
-        _pathContainer.Children.AddChildren(_drivePath, (int)GRID_COL_SETTING.PATH_INPUT, (int)GRID_ROW_SETTING.PATH);
-        _pathContainer.Children.AddChildren(_browseBtn, (int)GRID_COL_SETTING.PATH_BROWSE_BUTTON, (int)GRID_ROW_SETTING.PATH);
+        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)GridColSetting.PATH_LABEL, (int)GridRowSetting.PATH);
+        _pathContainer.Children.AddChildren(_drivePath, (int)GridColSetting.PATH_INPUT, (int)GridRowSetting.PATH);
+        _pathContainer.Children.AddChildren(_browseBtn, (int)GridColSetting.PATH_BROWSE_BUTTON, (int)GridRowSetting.PATH);
 
         _mainTabControl = new TabControl { };
         _mainTabControl.LoadModule();
@@ -285,9 +276,7 @@ public partial class MainWindow
             Margin = MAIN_MARGIN_THICKNESS,
             Padding = Constants.DEFAULT_PADDING
         };
-        #endregion
 
-        #region Etcs
         _vSplitter = new GridSplitter
         {
             HorizontalAlignment = HorizontalAlignment.Center,
@@ -323,19 +312,19 @@ public partial class MainWindow
             ],
         };
 
-        _rootGrid.Children.AddChildren(_queuePanel, (int)GRID_COL_SETTING.QUEUE, (int)GRID_ROW_SETTING.QUEUE);
-        _rootGrid.Children.AddChildren(_logPanel, (int)GRID_COL_SETTING.LOG, (int)GRID_ROW_SETTING.LOG, (int)GRID_SPAN_COL_SETTING.LOG);
-        _rootGrid.Children.AddChildren(_mainPanel, (int)GRID_COL_SETTING.MAIN, (int)GRID_ROW_SETTING.MAIN);
-        _rootGrid.Children.AddChildren(_vSplitter, (int)GRID_COL_SETTING.V_SPLITTER, (int)GRID_ROW_SETTING.V_SPLITTER);
-        _rootGrid.Children.AddChildren(_hSplitter, (int)GRID_COL_SETTING.H_SPLITTER, (int)GRID_ROW_SETTING.H_SPLITTER, (int)GRID_SPAN_COL_SETTING.H_SPLITTER);
-        _rootGrid.Children.AddChildren(_cornerFiller, (int)GRID_COL_SETTING.CORNER_FILTER, (int)GRID_ROW_SETTING.CORNER_FILTER);
-        #endregion
+        _rootGrid.Children.AddChildren(_queuePanel, (int)GridColSetting.QUEUE, (int)GridRowSetting.QUEUE);
+        _rootGrid.Children.AddChildren(_logPanel, (int)GridColSetting.LOG, (int)GridRowSetting.LOG, (int)GridSpanColSetting.LOG);
+        _rootGrid.Children.AddChildren(_mainPanel, (int)GridColSetting.MAIN, (int)GridRowSetting.MAIN);
+        _rootGrid.Children.AddChildren(_vSplitter, (int)GridColSetting.V_SPLITTER, (int)GridRowSetting.V_SPLITTER);
+        _rootGrid.Children.AddChildren(_hSplitter, (int)GridColSetting.H_SPLITTER, (int)GridRowSetting.H_SPLITTER, (int)GridSpanColSetting.H_SPLITTER);
+        _rootGrid.Children.AddChildren(_cornerFiller, (int)GridColSetting.CORNER_FILTER, (int)GridRowSetting.CORNER_FILTER);
 
 
         UsbWatcher.InitUsbListener();
         this.SubscribeModuleEvents();
 
-        Content = _rootGrid;
+        var mainDialogHost = new DialogHost { Identifier = Constants.APP_NAME, Content = _rootGrid, Background = Constants.CONTAINER_BACKGROUND_COLOR };
+        Content = mainDialogHost;
     }
 
     public override void SubscribeModuleEvents()

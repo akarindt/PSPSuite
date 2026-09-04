@@ -2,7 +2,9 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using DialogHostAvalonia;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Windows;
 using System;
@@ -28,6 +30,8 @@ class Program
             {
                 if (builder.Instance is null) return;
                 builder.Instance.Styles.Add(new FluentTheme());
+                builder.Instance.Styles.Add(new DialogHostStyles());
+                builder.Instance.RequestedThemeVariant = ThemeVariant.Light;
             })
             .SetupWithLifetime(lifetime);
 
