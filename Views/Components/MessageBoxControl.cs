@@ -16,19 +16,19 @@ public enum IconState
     ERROR = 0,
     OK = 1,
     INFO = 2,
-    CONFIRM = 3
+    CONFIRM = 3,
 }
 
 public enum ButtonType
 {
     OK = 0,
-    OK_CANCEL = 1
+    OK_CANCEL = 1,
 }
 
 public enum MessageBoxResult
 {
-    OK,
-    CANCEL
+    OK = 0,
+    CANCEL = 1,
 }
 
 public class MessageBoxControl : UserControl
@@ -37,7 +37,7 @@ public class MessageBoxControl : UserControl
     {
         TITLE = 16,
         MESSAGE = 14,
-        ICON = 20
+        ICON = 20,
     }
 
     private const double BUTTON_WIDTH = 80.0;

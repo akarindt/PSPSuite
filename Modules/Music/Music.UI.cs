@@ -27,29 +27,53 @@ public partial class Music : GenericModule
     private Button _toQueueBtn = new();
     private Button _clearListBtn = new();
     private CheckBox _selectAllCheckBox = new();
-    
-    private enum MusicGridRowSetting
+
+    private enum UrlContainerRowSetting
+    {
+        URL_ROW = 0,
+    }
+
+    private enum UrlContainerColSetting
+    {
+        URL_LABEL = 0,
+        URL_TEXTBOX = 1,
+        BUTTON_GRID = 2,
+    }
+
+    private enum ButtonGridRowSetting
+    {
+        BUTTON_ROW = 0,
+    }
+
+    private enum ButtonGridColSetting
+    {
+        SEARCH_BTN = 0,
+        ADD_LOCAL_BTN = 1,
+    }
+
+    private enum ClearSendBtnGridRowSetting
+    {
+        CLEAR_BTN = 0,
+        TO_QUEUE_BTN = 0,
+    }
+
+    private enum ClearSendBtnGridColSetting
+    {
+        CLEAR_BTN = 0,
+        TO_QUEUE_BTN = 1,
+    }
+
+    private enum MainGridRowSetting
     {
         URL_CONTAINER = 0,
         SELECT_ALL_CHK_BOX = 1,
         SCROLL_VIEWER = 2,
         CLEAR_SEND_BTN_GRID = 3,
-        URL_ROW = 0,
-        BUTTON_ROW = 0,
-        CLEAR_BTN = 0,
-        TO_QUEUE_BTN = 0,
     }
 
-    private enum MusicGridColSetting
+    private enum MainGridColSetting
     {
-        URL_LABEL = 0,
-        URL_TEXTBOX = 1,
-        BUTTON_GRID = 2,
-        SEARCH_BTN = 0,
-        ADD_LOCAL_BTN = 1,
         MAIN_COL = 0,
-        CLEAR_BTN = 0,
-        TO_QUEUE_BTN = 1
     }
 
     public override void BuildUI()
@@ -124,13 +148,13 @@ public partial class Music : GenericModule
 
         _addLocalBtn.Click += async (s, e) => await AddLocalBtn_Clicked(s, e);
 
-        _buttonGrid.Children.AddChildren(_searchBtn, (int)MusicGridColSetting.SEARCH_BTN, (int)MusicGridRowSetting.BUTTON_ROW);
-        _buttonGrid.Children.AddChildren(_addLocalBtn, (int)MusicGridColSetting.ADD_LOCAL_BTN, (int)MusicGridRowSetting.BUTTON_ROW);
+        _buttonGrid.Children.AddChildren(_searchBtn, (int)ButtonGridColSetting.SEARCH_BTN, (int)ButtonGridRowSetting.BUTTON_ROW);
+        _buttonGrid.Children.AddChildren(_addLocalBtn, (int)ButtonGridColSetting.ADD_LOCAL_BTN, (int)ButtonGridRowSetting.BUTTON_ROW);
 
         var label = new TextBlock { Text = "Url", VerticalAlignment = VerticalAlignment.Center };
-        _urlContainer.Children.AddChildren(label, (int)MusicGridColSetting.URL_LABEL, (int)MusicGridRowSetting.URL_ROW);
-        _urlContainer.Children.AddChildren(_urlTextBox, (int)MusicGridColSetting.URL_TEXTBOX, (int)MusicGridRowSetting.URL_ROW);
-        _urlContainer.Children.AddChildren(_buttonGrid, (int)MusicGridColSetting.BUTTON_GRID, (int)MusicGridRowSetting.URL_ROW);
+        _urlContainer.Children.AddChildren(label, (int)UrlContainerColSetting.URL_LABEL, (int)UrlContainerRowSetting.URL_ROW);
+        _urlContainer.Children.AddChildren(_urlTextBox, (int)UrlContainerColSetting.URL_TEXTBOX, (int)UrlContainerRowSetting.URL_ROW);
+        _urlContainer.Children.AddChildren(_buttonGrid, (int)UrlContainerColSetting.BUTTON_GRID, (int)UrlContainerRowSetting.URL_ROW);
 
         var _clearSendBtnGrid = new Grid
         {
@@ -180,8 +204,8 @@ public partial class Music : GenericModule
         };
         _toQueueBtn.Click += ToQueueBtn_Clicked;
 
-        _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)MusicGridColSetting.CLEAR_BTN, (int)MusicGridRowSetting.CLEAR_BTN);
-        _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)MusicGridColSetting.TO_QUEUE_BTN, (int)MusicGridRowSetting.TO_QUEUE_BTN);
+        _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)ClearSendBtnGridColSetting.CLEAR_BTN, (int)ClearSendBtnGridRowSetting.CLEAR_BTN);
+        _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)ClearSendBtnGridColSetting.TO_QUEUE_BTN, (int)ClearSendBtnGridRowSetting.TO_QUEUE_BTN);
 
 
         var elementFactory = new RecyclingElementFactory();
@@ -226,10 +250,10 @@ public partial class Music : GenericModule
             RowSpacing = Constants.DEFAULT_ROW_SPACING
         };
 
-        mainGrid.Children.AddChildren(_urlContainer, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.URL_CONTAINER);
-        mainGrid.Children.AddChildren(_selectAllCheckBox, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.SELECT_ALL_CHK_BOX);
-        mainGrid.Children.AddChildren(_scrollViewer, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.SCROLL_VIEWER);
-        mainGrid.Children.AddChildren(_clearSendBtnGrid, (int)MusicGridColSetting.MAIN_COL, (int)MusicGridRowSetting.CLEAR_SEND_BTN_GRID);
+        mainGrid.Children.AddChildren(_urlContainer, (int)MainGridColSetting.MAIN_COL, (int)MainGridRowSetting.URL_CONTAINER);
+        mainGrid.Children.AddChildren(_selectAllCheckBox, (int)MainGridColSetting.MAIN_COL, (int)MainGridRowSetting.SELECT_ALL_CHK_BOX);
+        mainGrid.Children.AddChildren(_scrollViewer, (int)MainGridColSetting.MAIN_COL, (int)MainGridRowSetting.SCROLL_VIEWER);
+        mainGrid.Children.AddChildren(_clearSendBtnGrid, (int)MainGridColSetting.MAIN_COL, (int)MainGridRowSetting.CLEAR_SEND_BTN_GRID);
 
         Content = new Border
         {

@@ -25,34 +25,36 @@ public partial class MainWindow
     private readonly Thickness PATH_CONTAINER_MARGIN_THICKNESS = new(15, 0);
     private readonly Thickness SEND_BTN_MARGIN_THICKNESS = new(5, 10);
 
-    private enum GridRowSetting
+    private enum RootGridRowSetting
     {
         QUEUE = 0,
-        LOG = 2,
-        MAIN = 0,
-        V_SPLITTER = 0,
         H_SPLITTER = 1,
-        CORNER_FILTER = 1,
+        LOG = 2,
+    }
+
+    private enum RootGridColSetting
+    {
+        MAIN = 0,
+        V_SPLITTER = 1,
+        QUEUE = 2,
+    }
+
+    private enum RootGridSpanColSetting
+    {
+        LOG_PANEL = 3,
+        H_SPLITTER = 3,
+    }
+
+    private enum PathContainerRowSetting
+    {
         PATH = 0,
     }
 
-    private enum GridColSetting
+    private enum PathContainerColSetting
     {
-        QUEUE = 2,
-        LOG = 0,
-        MAIN = 0,
-        V_SPLITTER = 1,
-        H_SPLITTER = 0,
-        CORNER_FILTER = 1,
         PATH_LABEL = 0,
         PATH_INPUT = 1,
-        PATH_BROWSE_BUTTON = 2
-    }
-
-    private enum GridSpanColSetting
-    {
-        LOG = 3,
-        H_SPLITTER = 3
+        PATH_BROWSE_BUTTON = 2,
     }
 
     private TextBlock _queueHeader = new();
@@ -250,9 +252,9 @@ public partial class MainWindow
 
         _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
 
-        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)GridColSetting.PATH_LABEL, (int)GridRowSetting.PATH);
-        _pathContainer.Children.AddChildren(_drivePath, (int)GridColSetting.PATH_INPUT, (int)GridRowSetting.PATH);
-        _pathContainer.Children.AddChildren(_browseBtn, (int)GridColSetting.PATH_BROWSE_BUTTON, (int)GridRowSetting.PATH);
+        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PathContainerColSetting.PATH_LABEL, (int)PathContainerRowSetting.PATH);
+        _pathContainer.Children.AddChildren(_drivePath, (int)PathContainerColSetting.PATH_INPUT, (int)PathContainerRowSetting.PATH);
+        _pathContainer.Children.AddChildren(_browseBtn, (int)PathContainerColSetting.PATH_BROWSE_BUTTON, (int)PathContainerRowSetting.PATH);
 
         _mainTabControl = new TabControl { };
         _mainTabControl.LoadModule();
@@ -312,12 +314,12 @@ public partial class MainWindow
             ],
         };
 
-        _rootGrid.Children.AddChildren(_queuePanel, (int)GridColSetting.QUEUE, (int)GridRowSetting.QUEUE);
-        _rootGrid.Children.AddChildren(_logPanel, (int)GridColSetting.LOG, (int)GridRowSetting.LOG, (int)GridSpanColSetting.LOG);
-        _rootGrid.Children.AddChildren(_mainPanel, (int)GridColSetting.MAIN, (int)GridRowSetting.MAIN);
-        _rootGrid.Children.AddChildren(_vSplitter, (int)GridColSetting.V_SPLITTER, (int)GridRowSetting.V_SPLITTER);
-        _rootGrid.Children.AddChildren(_hSplitter, (int)GridColSetting.H_SPLITTER, (int)GridRowSetting.H_SPLITTER, (int)GridSpanColSetting.H_SPLITTER);
-        _rootGrid.Children.AddChildren(_cornerFiller, (int)GridColSetting.CORNER_FILTER, (int)GridRowSetting.CORNER_FILTER);
+        _rootGrid.Children.AddChildren(_queuePanel, (int)RootGridColSetting.QUEUE, (int)RootGridRowSetting.QUEUE);
+        _rootGrid.Children.AddChildren(_logPanel, (int)RootGridColSetting.MAIN, (int)RootGridRowSetting.LOG, (int)RootGridSpanColSetting.LOG_PANEL);
+        _rootGrid.Children.AddChildren(_mainPanel, (int)RootGridColSetting.MAIN, (int)RootGridRowSetting.QUEUE);
+        _rootGrid.Children.AddChildren(_vSplitter, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.QUEUE);
+        _rootGrid.Children.AddChildren(_hSplitter, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.H_SPLITTER, (int)RootGridSpanColSetting.H_SPLITTER);
+        _rootGrid.Children.AddChildren(_cornerFiller, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.H_SPLITTER);
 
 
         UsbWatcher.InitUsbListener();

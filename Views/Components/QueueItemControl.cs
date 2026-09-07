@@ -13,7 +13,7 @@ public class QueueItemControl : Control
     {
         PILL = 9,
         STATUS = 10,
-        FILE_NAME = 12
+        FILE_NAME = 12,
     }
 
     private const double PILLS_SPACING = 6.0;

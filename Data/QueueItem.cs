@@ -4,14 +4,14 @@ public enum QueueItemType
 {
     MUSIC = 0,
     VIDEO = 1,
-    PLAYLIST = 2
+    PLAYLIST = 2,
 }
 
 public enum QueueItemStatus
 {
     READY = 0,
     COPYING = 1,
-    COMPLETE = 2
+    COMPLETE = 2,
 }
 
 public class QueueItem
