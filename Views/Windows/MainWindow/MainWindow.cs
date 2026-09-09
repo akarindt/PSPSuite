@@ -1,10 +1,15 @@
 using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Platform.Storage;
+using PSPSuite.Data;
 using PSPSuite.Helpers;
+using PSPSuite.Modules;
 
 namespace PSPSuite.Views.Windows;
 
@@ -42,6 +47,46 @@ public partial class MainWindow : GenericWindow
         {
             await MessageBox.Err("Error", "Queue is empty!");
             return;
+        }
+    }
+
+    protected override async Task InitAsync()
+    {
+        await base.InitAsync();
+        await this.LoadDeps();
+    }
+
+
+    protected override void SubscribeModuleEvents()
+    {
+        foreach (var item in _mainTabControl.Items)
+        {
+            if (item is TabItem tab && tab.Content is GenericModule module)
+            {
+                module.SendToQueueRequested += OnSendToQueueRequested;
+            }
+        }
+    }
+
+    protected override void OnSendToQueueRequested(object? sender, IList items)
+    {
+        _queueList.ItemsSource = null;
+        _queueListData.Clear();
+        _queueList.ItemsSource = _queueListData;
+
+        if (items is List<Audio> audioList)
+        {
+            foreach (var audio in audioList)
+            {
+                _queueListData.Add(new QueueItem
+                {
+                    FileName = audio.FileName,
+                    FilePath = audio.FilePath,
+                    FileType = QueueItemType.MUSIC,
+                    Status = QueueItemStatus.READY,
+                    IsLocal = audio.IsLocal
+                });
+            }
         }
     }
 }

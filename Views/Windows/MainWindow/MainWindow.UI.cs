@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -81,7 +82,7 @@ public partial class MainWindow
 
     private readonly ObservableCollection<QueueItem> _queueListData = new();
 
-    public override void BuildUI()
+    protected override void BuildUI()
     {
 
         _queueHeader = new TextBlock
@@ -329,36 +330,4 @@ public partial class MainWindow
         Content = mainDialogHost;
     }
 
-    public override void SubscribeModuleEvents()
-    {
-        foreach (var item in _mainTabControl.Items)
-        {
-            if (item is TabItem tab && tab.Content is GenericModule module)
-            {
-                module.SendToQueueRequested += OnSendToQueueRequested;
-            }
-        }
-    }
-
-    public override void OnSendToQueueRequested(object? sender, IList items)
-    {
-        _queueList.ItemsSource = null;
-        _queueListData.Clear();
-        _queueList.ItemsSource = _queueListData;
-
-        if (items is List<Audio> audioList)
-        {
-            foreach (var audio in audioList)
-            {
-                _queueListData.Add(new QueueItem
-                {
-                    FileName = audio.FileName,
-                    FilePath = audio.FilePath,
-                    FileType = QueueItemType.MUSIC,
-                    Status = QueueItemStatus.READY,
-                    IsLocal = audio.IsLocal
-                });
-            }
-        }
-    }
 }

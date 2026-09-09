@@ -1,5 +1,8 @@
 using System.Collections;
+using System.ComponentModel;
+using System.Threading.Tasks;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using PSPSuite.Helpers;
@@ -15,9 +18,9 @@ public abstract class GenericWindow : Window
         MinHeight = Constants.MAIN_SCREEN_H;
         RequestedThemeVariant = Constants.REQUESTED_THEME_VARIANT;
         Background = Constants.PRIMARY_BACKGROUND_COLOR;
-        
+
         WindowState = WindowState.Maximized;
-        Loaded += (s, e) => BuildUI();
+        Loaded += OnWindowLoaded;
 
 #if DEBUG
         Loaded += (s, e) => HotReload.OnCodeUpdated += ReloadUI;
@@ -28,15 +31,29 @@ public abstract class GenericWindow : Window
 #if DEBUG
     private void ReloadUI()
     {
-        _ = Dispatcher.InvokeAsync(() =>
+        _ = Dispatcher.InvokeAsync(async () =>
         {
             Content = null;
             BuildUI();
+
+            Init();
+            await InitAsync();
         });
     }
 #endif
 
-    public abstract void BuildUI();
-    public abstract void SubscribeModuleEvents();
-    public abstract void OnSendToQueueRequested(object? sender, IList items);
+    private async void OnWindowLoaded(object? sender, RoutedEventArgs e)
+    {
+        Loaded -= OnWindowLoaded;
+
+        BuildUI();
+        Init();
+        await InitAsync();
+    }
+
+    protected abstract void BuildUI();
+    protected abstract void SubscribeModuleEvents();
+    protected abstract void OnSendToQueueRequested(object? sender, IList items);
+    protected virtual async Task InitAsync() => await Task.CompletedTask;
+    protected virtual void Init() { }
 }
