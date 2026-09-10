@@ -1,23 +1,16 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Threading.Tasks;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
-using Avalonia.Media;
-using Avalonia.Threading;
 using DialogHostAvalonia;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
-using PSPSuite.Modules;
 using PSPSuite.Views.Components;
 
 namespace PSPSuite.Views.Windows;
 
-public partial class MainWindow
+public partial class MainWindow : GenericWindow
 {
     private readonly Thickness QUEUE_MARGIN_THICKNESS = new(0, 10, 5, 0);
     private readonly Thickness LOG_MARGIN_THICKNESS = new(5, 0, 5, 5);
@@ -109,7 +102,6 @@ public partial class MainWindow
             };
         });
 
-
         _queueList = new ItemsRepeater
         {
             ItemsSource = _queueListData,
@@ -138,7 +130,6 @@ public partial class MainWindow
                 ["ButtonBackgroundPressed"] = Constants.PRIMARY_HOVER_COLOR
             }
         };
-        _queueSendBtn.Click += async (s, e) => await QueueSendBtn_Clicked(s, e);
 
         DockPanel.SetDock(_queueSendBtn, Dock.Bottom);
 
@@ -181,15 +172,6 @@ public partial class MainWindow
         };
 
         _logScrollViewer = new ScrollViewer { Content = _logTextBlock };
-
-        Console.SetOut(new TextWriterExtend(text =>
-        {
-            Dispatcher.Post(() =>
-            {
-                _logTextBlock.Text += text;
-                _logScrollViewer.ScrollToEnd();
-            });
-        }));
 
         _logPanel = new Border
         {
@@ -251,14 +233,13 @@ public partial class MainWindow
             Margin = BROWSE_BTN_MARGIN_THICKNESS
         };
 
-        _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
-
+        
         _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PathContainerColSetting.PATH_LABEL, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_drivePath, (int)PathContainerColSetting.PATH_INPUT, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_browseBtn, (int)PathContainerColSetting.PATH_BROWSE_BUTTON, (int)PathContainerRowSetting.PATH);
 
         _mainTabControl = new TabControl { };
-        _mainTabControl.LoadModule();
+
 
         DockPanel.SetDock(_pathContainer, Dock.Top);
 
@@ -321,10 +302,6 @@ public partial class MainWindow
         _rootGrid.Children.AddChildren(_vSplitter, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.QUEUE);
         _rootGrid.Children.AddChildren(_hSplitter, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.H_SPLITTER, (int)RootGridSpanColSetting.H_SPLITTER);
         _rootGrid.Children.AddChildren(_cornerFiller, (int)RootGridColSetting.V_SPLITTER, (int)RootGridRowSetting.H_SPLITTER);
-
-
-        UsbWatcher.InitUsbListener();
-        this.SubscribeModuleEvents();
 
         var mainDialogHost = new DialogHost { Identifier = Constants.APP_NAME, Content = _rootGrid, Background = Constants.CONTAINER_BACKGROUND_COLOR };
         Content = mainDialogHost;

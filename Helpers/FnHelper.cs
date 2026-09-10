@@ -1,6 +1,11 @@
+using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Runtime.InteropServices;
+using System.Transactions;
+using YoutubeDLSharp;
 
 namespace PSPSuite.Helpers;
 
@@ -43,7 +48,7 @@ public static class FnHelper
 
     public static void DeleteAllContent(string folderPath)
     {
-        if(!Directory.Exists(folderPath)) return;
+        if (!Directory.Exists(folderPath)) return;
 
         var di = new DirectoryInfo(folderPath);
         foreach (FileInfo file in di.GetFiles())
@@ -76,5 +81,40 @@ public static class FnHelper
             string destSubDir = Path.Combine(targetDir, dirName);
             CopyDirectoryContents(subDir, destSubDir);
         }
+    }
+
+
+    public static bool IsDirectoryEmpty(string path)
+    {
+        if (!Directory.Exists(path)) return true;
+        return !Directory.EnumerateFileSystemEntries(path).Any();
+    }
+
+
+    public static string GetDenoBinary()
+    {
+        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) return "deno.exe";
+        return "deno";
+    }
+
+    public static bool IsUrl(string uriName)
+    {
+        // Source - https://stackoverflow.com/a/7581824
+        // Posted by Arabela Paslaru, modified by community. See post 'Timeline' for change history
+        // Retrieved 2026-09-10, License - CC BY-SA 3.0
+
+        bool result = Uri.TryCreate(uriName, UriKind.Absolute, out var uriResult) && (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+        return result;
+    }
+
+    public static TimeSpan? FormatFloatToTimeSpan(float? value)
+    {
+        // Source - https://stackoverflow.com/a/45402292
+        // Posted by jeanfrg, modified by community. See post 'Timeline' for change history
+        // Retrieved 2026-09-10, License - CC BY-SA 3.0
+        if(!value.HasValue) return null;
+        TimeSpan span = TimeSpan.FromSeconds((double)(new decimal(value.Value)));
+
+        return span;
     }
 }

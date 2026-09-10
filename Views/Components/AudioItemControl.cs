@@ -152,9 +152,9 @@ public class AudioItemControl : Control
             var audio = change.GetNewValue<Audio?>();
             if (audio != null)
             {
-                string isLocal = audio.IsLocal ? "(Local)" : "";
+                string isLocal = audio.IsLocal ? "(Local) " : "";
 
-                _fileNameText.Text = string.IsNullOrWhiteSpace(audio.FileName) ? $"{isLocal} Unknown Title" : $"{isLocal} {audio.FileName}";
+                _fileNameText.Text = string.IsNullOrWhiteSpace(audio.FileName) ? $"{isLocal}Unknown Title" : $"{isLocal}{audio.FileName}";
                 _artistAlbumText.Text = $"{audio.ContributeArtist ?? "Unknown Artist"} • {audio.Album ?? "Unknown Album"}";
                 _fileSizeText.Text = FormatFileSize(audio.Size);
                 _durationText.Text = audio.Duration == null ? "00:00:00" : audio.Duration.Value.ToString(@"hh\:mm\:ss");

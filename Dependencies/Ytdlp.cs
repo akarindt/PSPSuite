@@ -3,6 +3,7 @@ using System.IO;
 using System.Threading.Tasks;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
+using YoutubeDLSharp;
 
 namespace PSPSuite.Dependencies;
 
@@ -14,19 +15,22 @@ public class Ytdlp : DependencyItem
 
     public override async Task DownloadItemAsync()
     {
-        var ytdlpPath = Path.Combine(Constants.DEPENDENCIES_FOLDER, "yt-dlp");
-        if(!Directory.Exists(ytdlpPath)) Directory.CreateDirectory(ytdlpPath);
+        var savedDir = Path.Combine(Constants.DEPENDENCIES_FOLDER);
+        if (!Directory.Exists(savedDir)) Directory.CreateDirectory(savedDir);
 
-        await YoutubeDLSharp.Utils.DownloadFFmpeg(ytdlpPath);
+        if (!File.Exists(Path.Combine(savedDir, YoutubeDLSharp.Utils.FfmpegBinaryName))) await YoutubeDLSharp.Utils.DownloadFFmpeg(savedDir);
         Console.WriteLine("[Ytdlp_DownloadItemAsync]:: FFmpeg - Download success");
 
-        await YoutubeDLSharp.Utils.DownloadFFprobe(ytdlpPath);
+        if (!File.Exists(Path.Combine(savedDir, YoutubeDLSharp.Utils.FfprobeBinaryName))) await YoutubeDLSharp.Utils.DownloadFFprobe(savedDir);
         Console.WriteLine("[Ytdlp_DownloadItemAsync]:: FFprobe - Download success");
 
-        await YoutubeDLSharp.Utils.DownloadYtDlp(ytdlpPath);
+        if (!File.Exists(Path.Combine(savedDir, YoutubeDLSharp.Utils.YtDlpBinaryName))) await YoutubeDLSharp.Utils.DownloadYtDlp(savedDir);
         Console.WriteLine("[Ytdlp_DownloadItemAsync]:: yt-dlp - Download success");
-
     }
 
-    public override async Task ExecuteAsync() => await Task.CompletedTask;
+    public override async Task Init()
+    {
+        await Task.CompletedTask;
+        Console.WriteLine("[Ytdlp_Init]::Success");
+    }
 }

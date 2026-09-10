@@ -13,18 +13,48 @@ using PSPSuite.Modules;
 
 namespace PSPSuite.Views.Windows;
 
-public partial class MainWindow : GenericWindow
+public partial class MainWindow
 {
-    public MainWindow()
+    private readonly IDependencyLoader _depLoader;
+    private readonly IEnumerable<GenericModule> _modules;
+
+    public MainWindow(IDependencyLoader depLoader, IEnumerable<GenericModule> modules)
     {
         _drivePath.Text = UsbWatcher.CurrentPspPath;
         UsbWatcher.OnPspPathChanged += (path) =>
         {
             _drivePath.Text = path;
         };
+
+        _depLoader = depLoader;
+        _modules = modules;
     }
 
-    public async Task BrowseBtn_Clicked(object? sender, RoutedEventArgs e)
+    protected override async Task InitAsync()
+    {
+        _queueSendBtn.Click += async (s, e) => await QueueSendBtn_Clicked(s, e);
+        _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
+        _mainTabControl.LoadModule(_modules);
+
+        Console.SetOut(new TextWriterExtend(text =>
+        {
+            Dispatcher.Post(() =>
+            {
+                _logTextBlock.Text += text;
+                _logScrollViewer.ScrollToEnd();
+            });
+        }));
+
+        UsbWatcher.InitUsbListener();
+        this.SubscribeModuleEvents();
+
+        await base.InitAsync();
+        await _depLoader.LoadDepsAsync();
+
+        this.Closed += Clean;
+    }
+
+        public async Task BrowseBtn_Clicked(object? sender, RoutedEventArgs e)
     {
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
@@ -50,12 +80,11 @@ public partial class MainWindow : GenericWindow
         }
     }
 
-    protected override async Task InitAsync()
+    private void Clean(object? sender, EventArgs e)
     {
-        await base.InitAsync();
-        await this.LoadDeps();
+        this.Closed -= Clean;
+        _ = _depLoader.Cleanup();
     }
-
 
     protected override void SubscribeModuleEvents()
     {

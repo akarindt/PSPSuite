@@ -17,7 +17,6 @@ public static class Constants
     public static readonly string DEPENDENCIES_FOLDER = AppDomain.CurrentDomain.BaseDirectory;
     public static readonly int DEFAULT_INT_ERROR_VALUE = -1;
     public static readonly int POT_SERVER_PORT = FnHelper.GetOperatingSystemChosenFreePort();
-
     public static readonly ThemeVariant REQUESTED_THEME_VARIANT = ThemeVariant.Dark;
     public static readonly SolidColorBrush PRIMARY_BACKGROUND_COLOR = new(Color.Parse("#252525"));
     public static readonly SolidColorBrush CONTAINER_BACKGROUND_COLOR = new(Color.Parse("#1A1A1A"));

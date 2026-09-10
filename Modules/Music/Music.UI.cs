@@ -146,8 +146,6 @@ public partial class Music : GenericModule
             VerticalAlignment = VerticalAlignment.Center,
         };
 
-        _addLocalBtn.Click += async (s, e) => await AddLocalBtn_Clicked(s, e);
-
         _buttonGrid.Children.AddChildren(_searchBtn, (int)ButtonGridColSetting.SEARCH_BTN, (int)ButtonGridRowSetting.BUTTON_ROW);
         _buttonGrid.Children.AddChildren(_addLocalBtn, (int)ButtonGridColSetting.ADD_LOCAL_BTN, (int)ButtonGridRowSetting.BUTTON_ROW);
 
@@ -184,7 +182,7 @@ public partial class Music : GenericModule
             },
             VerticalAlignment = VerticalAlignment.Center,
         };
-        _clearListBtn.Click += ClearListBtn_Clicked;
+        
 
         _toQueueBtn = new Button
         {
@@ -202,7 +200,6 @@ public partial class Music : GenericModule
             },
             VerticalAlignment = VerticalAlignment.Center,
         };
-        _toQueueBtn.Click += ToQueueBtn_Clicked;
 
         _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)ClearSendBtnGridColSetting.CLEAR_BTN, (int)ClearSendBtnGridRowSetting.CLEAR_BTN);
         _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)ClearSendBtnGridColSetting.TO_QUEUE_BTN, (int)ClearSendBtnGridRowSetting.TO_QUEUE_BTN);
@@ -224,7 +221,6 @@ public partial class Music : GenericModule
             Layout = new StackLayout { Spacing = Constants.DEFAULT_ITEM_REPEATER_SPACING },
             ItemTemplate = elementFactory
         };
-        _itemsRepeater.ElementPrepared += ItemsRepeater_ElementPrepared;
 
         _scrollViewer = new ScrollViewer
         {
@@ -237,7 +233,6 @@ public partial class Music : GenericModule
         {
             Content = "Select all",
         };
-        _selectAllCheckBox.IsCheckedChanged += SelectAllCheckBox_IsCheckedChanged;
 
         var mainGrid = new Grid
         {

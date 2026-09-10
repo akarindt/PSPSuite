@@ -16,16 +16,17 @@ public class BgutilYtdlpPotProvider : DependencyItem
     private string _folderName = "bgutil-ytdlp-pot-provider";
     private string _combinedPath => Path.Combine(_baseDir, _folderName);
     private string _repoPluginFolder => Path.Combine(_combinedPath, "plugin", "yt_dlp_plugins");
-    private string _pluginFolder => Path.Combine(_baseDir, "yt-dlp", "yt-dlp-plugins");
+    private string _pluginFolder => Path.Combine(_baseDir, "yt-dlp-plugins", _folderName);
     private string _repoServerFolder => Path.Combine(_combinedPath, "server");
-    private string _serverFolder => Path.Combine(_baseDir, "yt-dlp", $"{_folderName}-server");
-
+    private string _serverFolder => Path.Combine(_baseDir, $"{_folderName}-server");
     public override int Order => (int)Constants.DepsOrder.BGUTIL_YTDLP;
     private Process? _serverProcess;
     public override async Task DownloadItemAsync()
     {
-        string baseDir = Constants.DEPENDENCIES_FOLDER;
         FnHelper.DeleteFolderIfExists(_combinedPath);
+        if (!FnHelper.IsDirectoryEmpty(_pluginFolder) && !FnHelper.IsDirectoryEmpty(_serverFolder)) return;
+
+        string baseDir = Constants.DEPENDENCIES_FOLDER;
         Console.WriteLine("[BgutilYtdlpPotProvider_DownloadItemAsync]::Pulling repo...");
 
         await Task.Run(async () =>
@@ -36,7 +37,7 @@ public class BgutilYtdlpPotProvider : DependencyItem
 
             // Copy plugin to yt-dlp folder
             // Clear old files before copy new files
-            FnHelper.DeleteAllContent(Path.Combine(_pluginFolder, _folderName));
+            FnHelper.DeleteAllContent(Path.Combine(_pluginFolder));
             FnHelper.CopyDirectoryContents(_repoPluginFolder, _pluginFolder);
 
             // Copy server files
@@ -49,45 +50,48 @@ public class BgutilYtdlpPotProvider : DependencyItem
         Console.WriteLine("[BgutilYtdlpPotProvider_DownloadItemAsync]::Success!");
     }
 
-    public override async Task ExecuteAsync()
+    public override async Task Init()
     {
         string baseDir = Constants.DEPENDENCIES_FOLDER;
-        string denoPath = Path.Combine(baseDir, "deno");
-
-        using (var installProcess = new Process
+        string denoPath = Path.Combine(baseDir, FnHelper.GetDenoBinary());
+        
+        if (FnHelper.IsDirectoryEmpty(Path.Combine(_serverFolder, "node_modules")))
         {
-            StartInfo = new ProcessStartInfo
+            using (var installProcess = new Process
             {
-                FileName = denoPath,
-                Arguments = "install --allow-scripts=npm:canvas --frozen",
-                WorkingDirectory = _serverFolder,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            },
-            EnableRaisingEvents = true
-        })
-        {
-            installProcess.OutputDataReceived += (s, e) =>
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = denoPath,
+                    Arguments = "install --allow-scripts=npm:canvas --frozen",
+                    WorkingDirectory = _serverFolder,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                },
+                EnableRaisingEvents = true
+            })
             {
-                if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Execute]::Install process - {e.Data}");
-            };
+                installProcess.OutputDataReceived += (s, e) =>
+                {
+                    if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Init]::Install process - {e.Data}");
+                };
 
-            installProcess.ErrorDataReceived += (s, e) =>
-            {
-                if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Execute]::Install process - {e.Data}");
-            };
+                installProcess.ErrorDataReceived += (s, e) =>
+                {
+                    if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Init]::Install process - {e.Data}");
+                };
 
-            installProcess.Exited += (s, e) =>
-            {
-                Console.WriteLine("[BgutilYtdlpPotProvider_Execute]::Install process - success");
-            };
+                installProcess.Exited += (s, e) =>
+                {
+                    Console.WriteLine("[BgutilYtdlpPotProvider_Init]::Install process - success");
+                };
 
-            installProcess.Start();
-            installProcess.BeginErrorReadLine();
-            installProcess.BeginOutputReadLine();
-            await installProcess.WaitForExitAsync();
+                installProcess.Start();
+                installProcess.BeginErrorReadLine();
+                installProcess.BeginOutputReadLine();
+                await installProcess.WaitForExitAsync();
+            }
         }
 
         StopServer();
@@ -109,12 +113,12 @@ public class BgutilYtdlpPotProvider : DependencyItem
 
         _serverProcess.OutputDataReceived += (s, e) =>
            {
-               if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Execute]::Server process - {e.Data}");
+               if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Init]::Server process - {e.Data}");
            };
 
         _serverProcess.ErrorDataReceived += (s, e) =>
         {
-            if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Execute]::Server process - {e.Data}");
+            if (e.Data != null) Console.WriteLine($"[BgutilYtdlpPotProvider_Init]::Server process - {e.Data}");
         };
 
         _serverProcess.Start();
