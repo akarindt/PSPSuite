@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Data;
 using Avalonia.Layout;
 using Avalonia.Media;
 using PSPSuite.Data;
@@ -87,6 +88,8 @@ public class QueueItemControl : Control
 
         VisualChildren.Add(_rootBorder);
         LogicalChildren.Add(_rootBorder);
+        
+        this.Bind(QueueItemProperty, new Binding());
     }
 
     private static TextBlock CreatePillTextBlock() => new()
@@ -149,6 +152,7 @@ public class QueueItemControl : Control
                 _fileTypeTextBlock.Text = type;
                 _statusTextBlock.Text = status;
                 _isLocalTextBlock.Text = local;
+                return;
             }
         }
     }

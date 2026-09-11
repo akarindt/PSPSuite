@@ -129,6 +129,8 @@ public class AudioItemControl : Control
 
         VisualChildren.Add(_rootBorder);
         LogicalChildren.Add(_rootBorder);
+
+        this.Bind(AudioItemProperty, new Binding());
     }
 
     protected override Size MeasureOverride(Size availableSize)
