@@ -17,6 +17,7 @@ public partial class MainWindow : GenericWindow
     private readonly Thickness MAIN_MARGIN_THICKNESS = new(5, 10, 0, 0);
     private readonly Thickness BROWSE_BTN_MARGIN_THICKNESS = new(0, 0, 5, 0);
     private readonly Thickness PATH_CONTAINER_MARGIN_THICKNESS = new(15, 0);
+    private readonly Thickness COOKIES_CONTAINER_MARGIN_THICKNESS = new(15, 0, 15, 10);
     private readonly Thickness SEND_BTN_MARGIN_THICKNESS = new(5, 10);
 
     private enum RootGridRowSetting
@@ -51,6 +52,18 @@ public partial class MainWindow : GenericWindow
         PATH_BROWSE_BUTTON = 2,
     }
 
+    private enum CookiesContainerRowSetting
+    {
+        PATH = 0,
+    }
+
+    private enum CookiesContainerColSetting
+    {
+        PATH_LABEL = 0,
+        PATH_INPUT = 1,
+        PATH_BROWSE_BUTTON = 2,
+    }
+
     private TextBlock _queueHeader = new();
     private DividerControl _queuePanelDivider = new();
     private ItemsRepeater _queueList = new();
@@ -62,6 +75,9 @@ public partial class MainWindow : GenericWindow
     private SelectableTextBlock _logTextBlock = new();
     private ScrollViewer _logScrollViewer = new();
     private Border _logPanel = new();
+    private Grid _cookiesPathContainer = new();
+    private TextBox _cookiesPath = new();
+    private Button _cookiesBrowseBtn = new();
     private TabControl _mainTabControl = new();
     private Border _mainPanel = new();
     private GridSplitter _vSplitter = new();
@@ -77,7 +93,6 @@ public partial class MainWindow : GenericWindow
 
     protected override void BuildUI()
     {
-
         _queueHeader = new TextBlock
         {
             Text = "Queue list",
@@ -191,6 +206,53 @@ public partial class MainWindow : GenericWindow
             }
         };
 
+        _cookiesPathContainer = new Grid
+        {
+            ColumnDefinitions = [
+                new ColumnDefinition(Constants.DEFAULT_LABEL_WIDTH),
+                new ColumnDefinition(GridLength.Star),
+                new ColumnDefinition(GridLength.Auto),
+            ],
+            RowDefinitions = [
+                new RowDefinition(GridLength.Auto),
+            ],
+            ColumnSpacing = Constants.DEFAULT_COLUMN_SPACING,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
+            VerticalAlignment = VerticalAlignment.Top,
+            Margin = COOKIES_CONTAINER_MARGIN_THICKNESS
+        };
+
+        _cookiesPath = new TextBox
+        {
+            VerticalAlignment = VerticalAlignment.Center,
+            IsReadOnly = true,
+            Focusable = false,
+            IsTabStop = false,
+            IsHitTestVisible = false,
+            Background = Constants.PRIMARY_BACKGROUND_COLOR
+        };
+
+        _cookiesBrowseBtn = new Button
+        {
+            Content = "Browse",
+            Background = Constants.PRIMARY_BUTTON_COLOR,
+            Cursor = new Avalonia.Input.Cursor(Avalonia.Input.StandardCursorType.Hand),
+            HorizontalContentAlignment = HorizontalAlignment.Center,
+            VerticalContentAlignment = VerticalAlignment.Center,
+            Resources =
+            {
+                ["ButtonBackgroundPointerOver"] = Constants.PRIMARY_HOVER_COLOR,
+                ["ButtonBackgroundPressed"] = Constants.PRIMARY_HOVER_COLOR
+            },
+            VerticalAlignment = VerticalAlignment.Center,
+            Margin = BROWSE_BTN_MARGIN_THICKNESS
+        };
+
+        _cookiesPathContainer.Children.AddChildren(new TextBlock { Text = "Cookies", VerticalAlignment = VerticalAlignment.Center }, (int)CookiesContainerColSetting.PATH_LABEL, (int)CookiesContainerRowSetting.PATH);
+        _cookiesPathContainer.Children.AddChildren(_cookiesPath, (int)CookiesContainerColSetting.PATH_INPUT, (int)CookiesContainerRowSetting.PATH);
+        _cookiesPathContainer.Children.AddChildren(_cookiesBrowseBtn, (int)CookiesContainerColSetting.PATH_BROWSE_BUTTON, (int)CookiesContainerRowSetting.PATH);
+        DockPanel.SetDock(_cookiesPathContainer, Dock.Top);
+
         _pathContainer = new Grid
         {
             ColumnDefinitions = [
@@ -233,13 +295,11 @@ public partial class MainWindow : GenericWindow
             Margin = BROWSE_BTN_MARGIN_THICKNESS
         };
 
-        
         _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PathContainerColSetting.PATH_LABEL, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_drivePath, (int)PathContainerColSetting.PATH_INPUT, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_browseBtn, (int)PathContainerColSetting.PATH_BROWSE_BUTTON, (int)PathContainerRowSetting.PATH);
 
         _mainTabControl = new TabControl { };
-
 
         DockPanel.SetDock(_pathContainer, Dock.Top);
 
@@ -247,6 +307,7 @@ public partial class MainWindow : GenericWindow
         {
             Children =
             {
+                _cookiesPathContainer,
                 _pathContainer,
                 _mainTabControl
             },
@@ -268,7 +329,6 @@ public partial class MainWindow : GenericWindow
             ResizeDirection = GridResizeDirection.Columns,
             Background = Constants.PRIMARY_BACKGROUND_COLOR,
         };
-
 
         _hSplitter = new GridSplitter
         {
@@ -306,5 +366,4 @@ public partial class MainWindow : GenericWindow
         var mainDialogHost = new DialogHost { Identifier = Constants.APP_NAME, Content = _rootGrid, Background = Constants.CONTAINER_BACKGROUND_COLOR };
         Content = mainDialogHost;
     }
-
 }

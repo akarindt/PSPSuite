@@ -38,6 +38,7 @@ public partial class MainWindow
     {
         _queueSendBtn.Click += async (s, e) => await QueueSendBtn_Clicked(s, e);
         _browseBtn.Click += async (s, e) => await BrowseBtn_Clicked(s, e);
+        _cookiesBrowseBtn.Click += async (s, e) => await CookiesBrowseBtn_Clicked(s, e);
         _mainTabControl.LoadModule(_modules);
 
         Console.SetOut(new TextWriterExtend(text =>
@@ -75,6 +76,59 @@ public partial class MainWindow
         _drivePath.Text = folder.Path.LocalPath;
     }
 
+
+    public async Task CookiesBrowseBtn_Clicked(object? sender, RoutedEventArgs e)
+    {
+        var topLevel = TopLevel.GetTopLevel(this);
+        if (topLevel == null) return;
+
+        var file = await topLevel.StorageProvider.OpenFilePickerWithResultAsync(new FilePickerOpenOptions
+        {
+            Title = "Select Cookies.txt",
+            FileTypeFilter = [FilePickerFileTypes.TextPlain],
+            AllowMultiple = false
+        });
+
+        if (file.Files.Count <= 0) return;
+        _cookiesPath.Text = file.Files[0].Path.LocalPath;
+        GlobalVar.CookiesTxtFilePath = _cookiesPath.Text;
+    }
+
+    private async Task<bool> CheckSend()
+    {
+        if (_queueListData.Count <= 0)
+        {
+            await MessageBox.Err("Error", "Queue is empty!");
+            return false;
+        }
+
+        if (_drivePath.Text == null || _drivePath.Text.Trim() == "")
+        {
+            await MessageBox.Err("Error", "Drive path is empty!");
+            return false;
+        }
+
+        if (GlobalVar.CookiesTxtFilePath == null || GlobalVar.CookiesTxtFilePath.Trim() == "")
+        {
+            await MessageBox.Err("Error", "You must include cookies.txt file!");
+            return false;
+        }
+
+        if (!Directory.Exists(_drivePath.Text.Trim()))
+        {
+            await MessageBox.Err("Error", "Drive path not found!");
+            return false;
+        }
+
+        if (!File.Exists(GlobalVar.CookiesTxtFilePath))
+        {
+            await MessageBox.Err("Error", "cookies.txt not found!");
+            return false;
+        }
+
+        return true;
+    }
+
     public async Task QueueSendBtn_Clicked(object? sender, RoutedEventArgs args)
     {
         if (_mainTabControl.SelectedContent is Music musicModule) await SendMusic();
@@ -82,35 +136,22 @@ public partial class MainWindow
 
     private async Task SendMusic()
     {
-        if (_queueListData.Count <= 0)
-        {
-            await MessageBox.Err("Error", "Queue is empty!");
-            return;
-        }
-
-        if (_drivePath.Text == null || _drivePath.Text.Trim() == "")
-        {
-            await MessageBox.Err("Error", "Drive path is empty!");
-            return;
-        }
-
-        if (!Directory.Exists(_drivePath.Text.Trim()))
-        {
-            await MessageBox.Err("Error", "Drive path not found!");
-            return;
-        }
-
         var localList = _queueListData.Where(x => x.IsLocal).ToList();
         var ytList = _queueListData.Where(x => !x.IsLocal).ToList();
 
         var localPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".local_music");
         var ytPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ".yt_music");
+
         if (!Directory.Exists(localPath)) Directory.CreateDirectory(localPath);
         if (!Directory.Exists(ytPath)) Directory.CreateDirectory(ytPath);
 
         string ffmpegPath = Path.Combine(Constants.DEPENDENCIES_FOLDER, YoutubeDLSharp.Utils.FfmpegBinaryName);
         string ytdlpPath = Path.Combine(Constants.DEPENDENCIES_FOLDER, YoutubeDLSharp.Utils.YtDlpBinaryName);
+
+#pragma warning disable CS8602
         string outputFolder = _drivePath.Text.Trim().TrimEnd('\\');
+        string cookiesFile = GlobalVar.CookiesTxtFilePath;
+#pragma warning restore CS8602
 
         if (localList.Count > 0)
         {
@@ -118,8 +159,41 @@ public partial class MainWindow
             {
                 foreach (var file in localList)
                 {
-                    var tempFilePath = Path.Combine(localPath, Path.GetFileName(file.FilePath));
+                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
+                    string extension = Path.GetExtension(file.FilePath);
+
+                    string cleanFileName = FnHelper.NormalizeText(fileNameWithoutExt) + extension;
+                    var tempFilePath = Path.Combine(ytPath, cleanFileName);
                     File.Copy(file.FilePath, tempFilePath, overwrite: true);
+
+                    using (var tfile = TagLib.File.Create(tempFilePath))
+                    {
+                        if (!string.IsNullOrEmpty(tfile.Tag.Title))
+                        {
+                            tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
+                        }
+
+                        if (tfile.Tag.Performers != null && tfile.Tag.Performers.Length > 0)
+                        {
+                            tfile.Tag.Performers = tfile.Tag.Performers
+                                .Select(artist => FnHelper.NormalizeText(artist))
+                                .ToArray();
+                        }
+
+                        if (tfile.Tag.AlbumArtists != null && tfile.Tag.AlbumArtists.Length > 0)
+                        {
+                            tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists
+                                .Select(artist => FnHelper.NormalizeText(artist))
+                                .ToArray();
+                        }
+
+                        if (!string.IsNullOrEmpty(tfile.Tag.Album))
+                        {
+                            tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
+                        }
+
+                        tfile.Save();
+                    }
                 }
 
                 if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -182,6 +256,13 @@ public partial class MainWindow
 
                     await localProcess.WaitForExitAsync();
                     Console.WriteLine($"[MainWindow_SendMusic]::Done");
+                    return;
+                }
+
+                //TODO Add linux/macos support
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+
                 }
             });
         }
@@ -189,44 +270,87 @@ public partial class MainWindow
         if (ytList.Count > 0)
         {
             string combinedLink = string.Join(" ", ytList.Select(x => $"\"{x.FilePath}\""));
-            using (var ytProcess = new Process
+            using var ytProcess = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
                     FileName = ytdlpPath,
-                    WorkingDirectory = ytPath,
                     UseShellExecute = false,
                     CreateNoWindow = true,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
                     StandardOutputEncoding = Encoding.UTF8,
                     StandardErrorEncoding = Encoding.UTF8,
-                    Arguments = $"-f \"ba/b\" -x --audio-format mp3 --audio-quality 192K --embed-thumbnail --convert-thumbnails jpg --add-metadata -o \"{outputFolder}\\%(title)s.%(ext)s\" --no-overwrites --sleep-requests 1 --parse-metadata \"YT Music:%(album_artist)s\" --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\" {combinedLink}"
+                    Arguments = $"-f \"ba/b\" -x --audio-format mp3 --cookies \"{cookiesFile}\" --audio-quality 192K --embed-thumbnail --convert-thumbnails jpg --ppa \"ThumbnailsConvertor+ffmpeg:-vf scale=-1:300,crop=300:300\" --add-metadata -o \"{ytPath}\\%(title)s.%(ext)s\" --no-overwrites --sleep-requests 1 --parse-metadata \"YT Music:%(album_artist)s\" --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\" {combinedLink}"
                 }
-            })
+            };
+
+            ytProcess.OutputDataReceived += (s, e) =>
+               {
+                   if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
+               };
+
+            ytProcess.ErrorDataReceived += (s, e) =>
             {
-                ytProcess.OutputDataReceived += (s, e) =>
-                   {
-                       if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                   };
+                if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
+            };
 
-                ytProcess.ErrorDataReceived += (s, e) =>
+            ytProcess.Start();
+            ytProcess.BeginOutputReadLine();
+            ytProcess.BeginErrorReadLine();
+
+            await ytProcess.WaitForExitAsync();
+
+            foreach (var file in Directory.EnumerateFiles(ytPath))
+            {
+                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file);
+                string extension = Path.GetExtension(file);
+
+                string cleanFileName = FnHelper.NormalizeText(fileNameWithoutExt);
+                string newFileName = cleanFileName + extension;
+                string newFilePath = Path.Combine(ytPath, newFileName);
+
+                if (file != newFilePath && !File.Exists(newFilePath))
                 {
-                    if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                };
+                    File.Move(file, newFilePath);
 
-                ytProcess.Start();
-                ytProcess.BeginOutputReadLine();
-                ytProcess.BeginErrorReadLine();
+                    using (var tfile = TagLib.File.Create(newFilePath))
+                    {
+                        if (!string.IsNullOrEmpty(tfile.Tag.Title))
+                        {
+                            tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
+                        }
 
-                await ytProcess.WaitForExitAsync();
-                Console.WriteLine($"[MainWindow_SendMusic]::Done");
+                        if (tfile.Tag.Performers != null && tfile.Tag.Performers.Length > 0)
+                        {
+                            tfile.Tag.Performers = tfile.Tag.Performers
+                                .Select(artist => FnHelper.NormalizeText(artist))
+                                .ToArray();
+                        }
+
+                        if (tfile.Tag.AlbumArtists != null && tfile.Tag.AlbumArtists.Length > 0)
+                        {
+                            tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists
+                                .Select(artist => FnHelper.NormalizeText(artist))
+                                .ToArray();
+                        }
+
+                        if (!string.IsNullOrEmpty(tfile.Tag.Album))
+                        {
+                            tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
+                        }
+
+                        tfile.Save();
+                    }
+                    File.Move(newFilePath, Path.Combine(outputFolder, newFileName));
+                }
             }
+
+            Console.WriteLine($"[MainWindow_SendMusic]::Done");
         }
 
-        //Clean up
-
-
+        FnHelper.DeleteAllContent(localPath);
+        FnHelper.DeleteAllContent(ytPath);
         return;
     }
 

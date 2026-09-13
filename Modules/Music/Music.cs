@@ -145,6 +145,7 @@ public partial class Music
 
     private async Task SearchBtn_Clicked(object? sender, RoutedEventArgs e)
     {
+        if (string.IsNullOrEmpty(GlobalVar.CookiesTxtFilePath)) return;
         if (string.IsNullOrEmpty(_urlTextBox.Text)) return;
 
         string url = _urlTextBox.Text.Trim();
@@ -155,6 +156,7 @@ public partial class Music
         {
             var ytdlp = new YoutubeDL();
             var options = new YoutubeDLSharp.Options.OptionSet();
+            options.AddCustomOption<string>("--cookies", GlobalVar.CookiesTxtFilePath);
             options.AddCustomOption<string>("--extractor-args", $"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}");
             options.AddCustomOption<string>("--sleep-requests", "1");
 
@@ -169,7 +171,7 @@ public partial class Music
             _audioList.Add(new Audio
             {
                 FileName = data.Title,
-                FilePath = data.Url,
+                FilePath = url,
                 DateCreated = data.UploadDate,
                 DateModified = data.ModifiedDate,
                 Size = null,

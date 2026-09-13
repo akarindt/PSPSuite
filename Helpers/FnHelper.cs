@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Transactions;
 using YoutubeDLSharp;
 
@@ -112,9 +113,31 @@ public static class FnHelper
         // Source - https://stackoverflow.com/a/45402292
         // Posted by jeanfrg, modified by community. See post 'Timeline' for change history
         // Retrieved 2026-09-10, License - CC BY-SA 3.0
-        if(!value.HasValue) return null;
+        if (!value.HasValue) return null;
         TimeSpan span = TimeSpan.FromSeconds((double)(new decimal(value.Value)));
 
         return span;
+    }
+
+    public static string NormalizeText(string text)
+    {
+        if (string.IsNullOrWhiteSpace(text)) return text;
+
+        string normalized = text.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new System.Text.StringBuilder();
+
+        foreach (char c in normalized)
+        {
+            var category = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (category != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                sb.Append(c);
+            }
+        }
+
+        return sb.ToString()
+                 .Normalize(System.Text.NormalizationForm.FormC)
+                 .Replace('Đ', 'D')
+                 .Replace('đ', 'd');
     }
 }
