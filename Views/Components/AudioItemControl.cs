@@ -30,6 +30,29 @@ public class AudioItemControl : Control
         DURATION_SIZE = 2,
     }
 
+    private enum AudioItemFontSize
+    {
+        SUBTITLE = 12,
+        FILE_SIZE = 11,
+    }
+
+    private const double ITEM_PADDING_HORIZONTAL = 12.0;
+    private const double ITEM_PADDING_VERTICAL = 8.0;
+    private const double STACK_SPACING = 8.0;
+    private const string FORMAT_HH_MM_SS = @"hh\:mm\:ss";
+    private const string DURATION_UNKNOWN_FULL = "00:00:00";
+    private const string DURATION_UNKNOWN_SHORT = "00:00";
+    private const string UNKNOWN_TITLE = "Unknown Title";
+    private const string UNKNOWN_ARTIST = "Unknown Artist";
+    private const string UNKNOWN_ALBUM = "Unknown Album";
+    private const string ERROR_LABEL = "(Error) Unknown";
+    private const string SIZE_UNKNOWN = "Unknown";
+    private const string SIZE_ZERO = "0 B";
+    private const string LOCAL_TAG = "(Local) ";
+    private const string SEPARATOR = " • ";
+    private static readonly string[] SIZE_SUFFIX = ["B", "KB", "MB", "GB", "TB"];
+    private const double SIZE_DIVISOR = 1024.0;
+
     public static readonly StyledProperty<Audio?> AudioItemProperty =
         AvaloniaProperty.Register<AudioItemControl, Audio?>(nameof(AudioItem));
 
@@ -50,7 +73,7 @@ public class AudioItemControl : Control
 
         _artistAlbumText = new TextBlock
         {
-            FontSize = 12,
+            FontSize = (double)AudioItemFontSize.SUBTITLE,
             Foreground = Brushes.Gray,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -72,7 +95,7 @@ public class AudioItemControl : Control
 
         _fileSizeText = new TextBlock
         {
-            FontSize = 11,
+            FontSize = (double)AudioItemFontSize.FILE_SIZE,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             Foreground = Brushes.Gray,
@@ -82,7 +105,7 @@ public class AudioItemControl : Control
         {
             Orientation = Orientation.Vertical,
             VerticalAlignment = VerticalAlignment.Center,
-            Margin = new Thickness(8, 0, 0, 0),
+            Margin = new Thickness(STACK_SPACING, 0, 0, 0),
             Children = { _durationText, _fileSizeText }
         };
 
@@ -109,14 +132,6 @@ public class AudioItemControl : Control
             HorizontalContentAlignment = HorizontalAlignment.Stretch
         };
 
-        _checkBox.IsCheckedChanged += (s, e) =>
-        {
-            if (AudioItem != null)
-            {
-                AudioItem.IsChecked = _checkBox.IsChecked ?? false;
-            }
-        };
-
         _checkBox.Bind(CheckBox.IsCheckedProperty, new Binding("IsChecked") { Mode = BindingMode.TwoWay });
 
         _rootBorder = new Border
@@ -129,8 +144,6 @@ public class AudioItemControl : Control
 
         VisualChildren.Add(_rootBorder);
         LogicalChildren.Add(_rootBorder);
-
-        this.Bind(AudioItemProperty, new Binding());
     }
 
     protected override Size MeasureOverride(Size availableSize)
@@ -154,36 +167,35 @@ public class AudioItemControl : Control
             var audio = change.GetNewValue<Audio?>();
             if (audio != null)
             {
-                string isLocal = audio.IsLocal ? "(Local) " : "";
+                string isLocal = audio.IsLocal ? LOCAL_TAG : "";
 
-                _fileNameText.Text = string.IsNullOrWhiteSpace(audio.FileName) ? $"{isLocal}Unknown Title" : $"{isLocal}{audio.FileName}";
-                _artistAlbumText.Text = $"{audio.ContributeArtist ?? "Unknown Artist"} • {audio.Album ?? "Unknown Album"}";
+                _fileNameText.Text = string.IsNullOrWhiteSpace(audio.FileName) ? $"{isLocal}{UNKNOWN_TITLE}" : $"{isLocal}{audio.FileName}";
+                _artistAlbumText.Text = $"{audio.ContributeArtist ?? UNKNOWN_ARTIST}{SEPARATOR}{audio.Album ?? UNKNOWN_ALBUM}";
                 _fileSizeText.Text = FormatFileSize(audio.Size);
-                _durationText.Text = audio.Duration == null ? "00:00:00" : audio.Duration.Value.ToString(@"hh\:mm\:ss");
+                _durationText.Text = audio.Duration == null ? DURATION_UNKNOWN_FULL : audio.Duration.Value.ToString(FORMAT_HH_MM_SS);
                 _checkBox.IsChecked = audio.IsChecked;
                 return;
             }
 
-            _fileNameText.Text = "(Error) Unknown";
-            _artistAlbumText.Text = "Unknown Artist • Unknown Album";
-            _fileSizeText.Text = "0 B";
-            _durationText.Text = "00:00";
+            _fileNameText.Text = ERROR_LABEL;
+            _artistAlbumText.Text = $"{UNKNOWN_ARTIST}{SEPARATOR}{UNKNOWN_ALBUM}";
+            _fileSizeText.Text = SIZE_ZERO;
+            _durationText.Text = DURATION_UNKNOWN_SHORT;
             _checkBox.IsChecked = false;
         }
     }
 
     private static string FormatFileSize(ulong? bytes)
     {
-        if (bytes == null) return "Unknown";
+        if (bytes == null) return SIZE_UNKNOWN;
 
-        string[] suffix = ["B", "KB", "MB", "GB", "TB"];
         int i = 0;
         double doubleBytes = bytes.Value;
-        while (doubleBytes >= 1024 && i < suffix.Length - 1)
+        while (doubleBytes >= SIZE_DIVISOR && i < SIZE_SUFFIX.Length - 1)
         {
             i++;
             doubleBytes /= 1024;
         }
-        return $"{doubleBytes:0.##} {suffix[i]}";
+        return $"{doubleBytes:0.##} {SIZE_SUFFIX[i]}";
     }
 }

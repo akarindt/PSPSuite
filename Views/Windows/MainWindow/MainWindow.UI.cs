@@ -3,6 +3,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
 using Avalonia.Layout;
+using AvaloniaEdit;
 using DialogHostAvalonia;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
@@ -72,8 +73,7 @@ public partial class MainWindow : GenericWindow
     private Border _queuePanel = new();
     private TextBlock _logPanelHeader = new();
     private DividerControl _logPanelDivider = new();
-    private SelectableTextBlock _logTextBlock = new();
-    private ScrollViewer _logScrollViewer = new();
+    private TextEditor _logTextBlock = new();
     private Border _logPanel = new();
     private Grid _cookiesPathContainer = new();
     private TextBox _cookiesPath = new();
@@ -178,15 +178,24 @@ public partial class MainWindow : GenericWindow
         _logPanelDivider = new DividerControl();
         DockPanel.SetDock(_logPanelDivider, Dock.Top);
 
-        _logTextBlock = new SelectableTextBlock
+        _logTextBlock = new TextEditor
         {
             Text = "",
             Foreground = Constants.PRIMARY_TEXT_COLOR,
             HorizontalAlignment = HorizontalAlignment.Stretch,
             VerticalAlignment = VerticalAlignment.Stretch,
+            IsReadOnly = true,
+            ShowLineNumbers = false,
+            WordWrap = true,
+            Options = new TextEditorOptions
+            {
+                AllowScrollBelowDocument = false
+            },
+            Resources =
+            {
+                ["SystemControlHighlightListAccentLowBrush"] = Constants.PRIMARY_TEXT_COLOR
+            }
         };
-
-        _logScrollViewer = new ScrollViewer { Content = _logTextBlock };
 
         _logPanel = new Border
         {
@@ -201,7 +210,7 @@ public partial class MainWindow : GenericWindow
                 {
                     _logPanelHeader,
                     _logPanelDivider,
-                    _logScrollViewer
+                    _logTextBlock
                 },
             }
         };
@@ -295,7 +304,7 @@ public partial class MainWindow : GenericWindow
             Margin = BROWSE_BTN_MARGIN_THICKNESS
         };
 
-        _pathContainer.Children.AddChildren(new TextBlock { Text = "Drive", VerticalAlignment = VerticalAlignment.Center }, (int)PathContainerColSetting.PATH_LABEL, (int)PathContainerRowSetting.PATH);
+        _pathContainer.Children.AddChildren(new TextBlock { Text = "Saved", VerticalAlignment = VerticalAlignment.Center }, (int)PathContainerColSetting.PATH_LABEL, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_drivePath, (int)PathContainerColSetting.PATH_INPUT, (int)PathContainerRowSetting.PATH);
         _pathContainer.Children.AddChildren(_browseBtn, (int)PathContainerColSetting.PATH_BROWSE_BUTTON, (int)PathContainerRowSetting.PATH);
 

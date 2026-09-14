@@ -2,8 +2,10 @@
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Styling;
 using Avalonia.Themes.Fluent;
+using AvaloniaEdit;
 using DialogHostAvalonia;
 using Microsoft.Extensions.DependencyInjection;
 using PSPSuite.Data;
@@ -42,6 +44,9 @@ class Program
                 if (builder.Instance is null) return;
                 builder.Instance.Styles.Add(new FluentTheme());
                 builder.Instance.Styles.Add(new DialogHostStyles());
+                var avaloniaEditStyle = (IStyle)AvaloniaXamlLoader.Load(new Uri("avares://AvaloniaEdit/Themes/Fluent/AvaloniaEdit.xaml"));
+                builder.Instance.Styles.Add(avaloniaEditStyle);
+
                 builder.Instance.RequestedThemeVariant = ThemeVariant.Light;
             })
             .SetupWithLifetime(lifetime);
@@ -80,7 +85,7 @@ class Program
                         services.AddTransient(typeof(DependencyItem), type);
                         continue;
                     }
-                    
+
                     if (baseType == typeof(GenericModule))
                     {
                         services.AddTransient(typeof(GenericModule), type);

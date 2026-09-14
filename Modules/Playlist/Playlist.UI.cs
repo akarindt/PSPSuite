@@ -2,6 +2,10 @@ using Avalonia.Controls;
 using PSPSuite.Attributes;
 using PSPSuite.Helpers;
 using Avalonia.Layout;
+using System.Collections.ObjectModel;
+using PSPSuite.Data;
+using Avalonia.Controls.Templates;
+using PSPSuite.Views.Components;
 
 namespace PSPSuite.Modules;
 
@@ -16,6 +20,8 @@ public partial class Playlist : GenericModule
     private ItemsRepeater _itemsRepeater = new();
     private ScrollViewer _scrollViewer = new(); 
     private CheckBox _selectAllCheckBox = new();
+    private readonly ObservableCollection<Audio> _audioList = new();
+
 
     private enum ClearSendBtnGridRowSetting
     {
@@ -161,11 +167,22 @@ public partial class Playlist : GenericModule
         _clearSendBtnGrid.Children.AddChildren(_clearListBtn, (int)ClearSendBtnGridColSetting.CLEAR_BTN, (int)ClearSendBtnGridRowSetting.CLEAR_BTN);
         _clearSendBtnGrid.Children.AddChildren(_toQueueBtn, (int)ClearSendBtnGridColSetting.TO_QUEUE_BTN, (int)ClearSendBtnGridRowSetting.TO_QUEUE_BTN);
 
+        var elementFactory = new RecyclingElementFactory();
+        elementFactory.SelectTemplateKey += (sender, args) =>
+        {
+            args.TemplateKey = "AudioItemKey";
+        };
+        elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Audio>((audio, namescope) =>
+        {
+            return new AudioItemControl();
+        });
+
         _itemsRepeater = new ItemsRepeater
         {
-
+            ItemsSource = _audioList,
+            Layout = new StackLayout { Spacing = Constants.DEFAULT_ITEM_REPEATER_SPACING },
+            ItemTemplate = elementFactory
         };
-
         _scrollViewer = new ScrollViewer
         {
             Content = _itemsRepeater,
