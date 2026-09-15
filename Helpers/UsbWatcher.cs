@@ -10,6 +10,12 @@ using Avalonia.Threading;
 
 namespace PSPSuite.Helpers;
 
+public enum PspContentCategory
+{
+    MUSIC = 0,
+    VIDEO = 1,
+}
+
 public static class UsbWatcher
 {
     private static bool _isInitialized;
@@ -17,6 +23,7 @@ public static class UsbWatcher
     private static CancellationTokenSource? _unixCts;
     public static event Action<string>? OnPspPathChanged;
     public static string CurrentPspPath { get; private set; } = string.Empty;
+    public static PspContentCategory ActiveCategory { get; private set; } = PspContentCategory.MUSIC;
     private static readonly int DEFAULT_DELAY = 3000;
 
     public static void InitUsbListener()
@@ -26,7 +33,7 @@ public static class UsbWatcher
 #endif
         if (_isInitialized) return;
 
-        UpdateAndNotifyPath();
+        UpdateAndNotifyPath(ActiveCategory);
 
         if (OperatingSystem.IsWindows())
         {
@@ -51,7 +58,7 @@ public static class UsbWatcher
         var query = new WqlEventQuery("SELECT * FROM Win32_VolumeChangeEvent WHERE EventType = 2 OR EventType = 3");
         _usbWatcherWin = new ManagementEventWatcher(query);
 
-        _usbWatcherWin.EventArrived += (sender, e) => Dispatcher.UIThread.Post(UpdateAndNotifyPath);
+        _usbWatcherWin.EventArrived += (sender, e) => Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
         _usbWatcherWin.Start();
     }
 
@@ -64,19 +71,28 @@ public static class UsbWatcher
         {
             while (!token.IsCancellationRequested)
             {
-                Dispatcher.UIThread.Post(UpdateAndNotifyPath);
+                Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
                 await Task.Delay(DEFAULT_DELAY, token);
             }
         }, token);
     }
 
-    private static void UpdateAndNotifyPath()
+    public static void SetActiveCategory(PspContentCategory category)
+    {
+        if (ActiveCategory != category)
+        {
+            ActiveCategory = category;
+            UpdateAndNotifyPath(category);
+        }
+    }
+
+    private static void UpdateAndNotifyPath(PspContentCategory category)
     {
 #if DEBUG
-        Console.WriteLine($"[UsbWatcher_UpdateAndNotifyPath]::Function called!");
+        Console.WriteLine($"[UsbWatcher_UpdateAndNotifyPath]::Category={category}");
 #endif
 
-        var newPath = CheckAndGetPspPath();
+        var newPath = CheckAndGetPspPath(category);
         if (CurrentPspPath != newPath)
         {
             CurrentPspPath = newPath;
@@ -84,18 +100,31 @@ public static class UsbWatcher
         }
     }
 
-    public static string CheckAndGetPspPath()
+    public static string CheckAndGetPspPath(PspContentCategory category)
     {
         var removableDrives = DriveInfo.GetDrives()
             .Where(d => (d.DriveType == DriveType.Removable || d.DriveType == DriveType.Fixed) && d.IsReady);
 
         foreach (var drive in removableDrives)
         {
-            string pspMusicPath = Path.Combine(drive.RootDirectory.FullName, "PSP", "MUSIC");
-            string rootMusicPath = Path.Combine(drive.RootDirectory.FullName, "MUSIC");
+            string basePath = drive.RootDirectory.FullName;
 
-            if (Directory.Exists(pspMusicPath)) return pspMusicPath;
-            if (Directory.Exists(rootMusicPath)) return rootMusicPath;
+            if (category == PspContentCategory.MUSIC)
+            {
+                string pspMusicPath = Path.Combine(basePath, "PSP", "MUSIC");
+                string rootMusicPath = Path.Combine(basePath, "MUSIC");
+
+                if (Directory.Exists(pspMusicPath)) return pspMusicPath;
+                if (Directory.Exists(rootMusicPath)) return rootMusicPath;
+            }
+            else if (category == PspContentCategory.VIDEO)
+            {
+                string pspVideoPath = Path.Combine(basePath, "PSP", "VIDEO");
+                string rootVideoPath = Path.Combine(basePath, "VIDEO");
+
+                if (Directory.Exists(pspVideoPath)) return pspVideoPath;
+                if (Directory.Exists(rootVideoPath)) return rootVideoPath;
+            }
         }
 
         return string.Empty;

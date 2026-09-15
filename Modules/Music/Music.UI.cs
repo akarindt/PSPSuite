@@ -21,7 +21,7 @@ public partial class Music : GenericModule
     private Button _addLocalBtn = new();
     private Grid _buttonGrid = new();
     private Grid _clearSendBtnGrid = new();
-    private readonly ObservableCollection<Audio> _audioList = new();
+    private readonly ObservableCollection<Media> _audioList = new();
     private ItemsRepeater _itemsRepeater = new();
     private ScrollViewer _scrollViewer = new();
     private Button _toQueueBtn = new();
@@ -210,9 +210,9 @@ public partial class Music : GenericModule
         {
             args.TemplateKey = "AudioItemKey";
         };
-        elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Audio>((audio, namescope) =>
+        elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Media>((media, namescope) =>
         {
-            return new AudioItemControl();
+            return new MediaItemControl();
         });
 
         _itemsRepeater = new ItemsRepeater
@@ -222,9 +222,17 @@ public partial class Music : GenericModule
             ItemTemplate = elementFactory
         };
 
+        var repeaterBorder = new Border
+        {
+            Child = _itemsRepeater,
+            Background = Constants.PRIMARY_BACKGROUND_COLOR,
+            CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
+            Padding = Constants.DEFAULT_PADDING,
+        };
+
         _scrollViewer = new ScrollViewer
         {
-            Content = _itemsRepeater,
+            Content = repeaterBorder,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
         };

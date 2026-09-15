@@ -8,6 +8,7 @@ using System.Runtime;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -57,7 +58,7 @@ public partial class Music
         _selectAllCheckBox.IsChecked = false;
         if (files.Count <= 0) return;
 
-        var fileInfos = new Audio[files.Count];
+        var fileInfos = new Media[files.Count];
         var parallelOptions = new ParallelOptions
         {
             MaxDegreeOfParallelism = Environment.ProcessorCount
@@ -90,7 +91,7 @@ public partial class Music
 
                 }
 
-                return new Audio
+                return new Media
                 {
                     FileName = title,
                     FilePath = file.Path.LocalPath,
@@ -126,11 +127,11 @@ public partial class Music
 
     private void ItemsRepeater_ElementPrepared(object? sender, ItemsRepeaterElementPreparedEventArgs args)
     {
-        if (args.Element is AudioItemControl control && _audioList != null && args.Index < _audioList.Count)
+        if (args.Element is MediaItemControl control && _audioList != null && args.Index < _audioList.Count)
         {
-            var currentAudio = _audioList[args.Index];
-            control.DataContext = currentAudio;
-            control.AudioItem = currentAudio;
+            var currentMedia = _audioList[args.Index];
+            control.DataContext = currentMedia;
+            control.MediaItem = currentMedia;
         }
     }
 
@@ -148,9 +149,15 @@ public partial class Music
         if (string.IsNullOrEmpty(GlobalVar.CookiesTxtFilePath)) return;
         if (string.IsNullOrEmpty(_urlTextBox.Text)) return;
 
-        string url = _urlTextBox.Text.Trim();
-        if (!FnHelper.IsUrl(url)) return;
+        string unfilteredUrl = _urlTextBox.Text.Trim();
+        if (!FnHelper.IsUrl(unfilteredUrl)) return;
 
+        var uri = new Uri(unfilteredUrl);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        string? vId = queryParams["v"];
+        if(vId == null || vId.Trim() == "") return;
+
+        string url = $"https://www.youtube.com/watch?v={vId}";
         Cursor = new Cursor(StandardCursorType.Wait);
         try
         {
@@ -168,7 +175,7 @@ public partial class Music
             }
 
             var data = result.Data;
-            _audioList.Add(new Audio
+            _audioList.Add(new Media
             {
                 FileName = data.Title,
                 FilePath = url,

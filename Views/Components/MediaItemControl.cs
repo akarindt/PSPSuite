@@ -14,7 +14,7 @@ using PSPSuite.Helpers;
 
 namespace PSPSuite.Views.Components;
 
-public class AudioItemControl : Control
+public class MediaItemControl : Control
 {
     private readonly TextBlock _fileNameText = new();
     private readonly TextBlock _artistAlbumText = new();
@@ -23,14 +23,14 @@ public class AudioItemControl : Control
     private readonly Border _rootBorder;
     private readonly CheckBox _checkBox = new();
 
-    private enum AudioItemGridColSetting
+    private enum MediaItemGridColSetting
     {
         CHECK_BOX = 0,
         INFO_SECTION = 1,
         DURATION_SIZE = 2,
     }
 
-    private enum AudioItemFontSize
+    private enum MediaItemFontSize
     {
         SUBTITLE = 12,
         FILE_SIZE = 11,
@@ -53,16 +53,16 @@ public class AudioItemControl : Control
     private static readonly string[] SIZE_SUFFIX = ["B", "KB", "MB", "GB", "TB"];
     private const double SIZE_DIVISOR = 1024.0;
 
-    public static readonly StyledProperty<Audio?> AudioItemProperty =
-        AvaloniaProperty.Register<AudioItemControl, Audio?>(nameof(AudioItem));
+    public static readonly StyledProperty<Media?> MediaItemProperty =
+        AvaloniaProperty.Register<MediaItemControl, Media?>(nameof(MediaItem));
 
-    public Audio? AudioItem
+    public Media? MediaItem
     {
-        get => GetValue(AudioItemProperty);
-        set => SetValue(AudioItemProperty, value);
+        get => GetValue(MediaItemProperty);
+        set => SetValue(MediaItemProperty, value);
     }
 
-    public AudioItemControl()
+    public MediaItemControl()
     {
         _fileNameText = new TextBlock
         {
@@ -73,7 +73,7 @@ public class AudioItemControl : Control
 
         _artistAlbumText = new TextBlock
         {
-            FontSize = (double)AudioItemFontSize.SUBTITLE,
+            FontSize = (double)MediaItemFontSize.SUBTITLE,
             Foreground = Brushes.Gray,
             VerticalAlignment = VerticalAlignment.Center,
             TextTrimming = TextTrimming.CharacterEllipsis
@@ -95,7 +95,7 @@ public class AudioItemControl : Control
 
         _fileSizeText = new TextBlock
         {
-            FontSize = (double)AudioItemFontSize.FILE_SIZE,
+            FontSize = (double)MediaItemFontSize.FILE_SIZE,
             HorizontalAlignment = HorizontalAlignment.Right,
             VerticalAlignment = VerticalAlignment.Center,
             Foreground = Brushes.Gray,
@@ -118,8 +118,8 @@ public class AudioItemControl : Control
             ]
         };
 
-        Grid.SetColumn(infoStack, (int)AudioItemGridColSetting.INFO_SECTION);
-        Grid.SetColumn(rightStack, (int)AudioItemGridColSetting.DURATION_SIZE);
+        Grid.SetColumn(infoStack, (int)MediaItemGridColSetting.INFO_SECTION);
+        Grid.SetColumn(rightStack, (int)MediaItemGridColSetting.DURATION_SIZE);
 
         grid.Children.Add(infoStack);
         grid.Children.Add(rightStack);
@@ -139,6 +139,8 @@ public class AudioItemControl : Control
             Background = Constants.PRIMARY_BACKGROUND_COLOR,
             CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
             Padding = Constants.DEFAULT_PADDING,
+            BorderThickness = new Thickness(1),
+            BorderBrush = Constants.PRIMARY_BUTTON_COLOR,
             Child = _checkBox
         };
 
@@ -162,18 +164,18 @@ public class AudioItemControl : Control
     {
         base.OnPropertyChanged(change);
 
-        if (change.Property == AudioItemProperty)
+        if (change.Property == MediaItemProperty)
         {
-            var audio = change.GetNewValue<Audio?>();
-            if (audio != null)
+            var media = change.GetNewValue<Media?>();
+            if (media != null)
             {
-                string isLocal = audio.IsLocal ? LOCAL_TAG : "";
+                string isLocal = media.IsLocal ? LOCAL_TAG : "";
 
-                _fileNameText.Text = string.IsNullOrWhiteSpace(audio.FileName) ? $"{isLocal}{UNKNOWN_TITLE}" : $"{isLocal}{audio.FileName}";
-                _artistAlbumText.Text = $"{audio.ContributeArtist ?? UNKNOWN_ARTIST}{SEPARATOR}{audio.Album ?? UNKNOWN_ALBUM}";
-                _fileSizeText.Text = FormatFileSize(audio.Size);
-                _durationText.Text = audio.Duration == null ? DURATION_UNKNOWN_FULL : audio.Duration.Value.ToString(FORMAT_HH_MM_SS);
-                _checkBox.IsChecked = audio.IsChecked;
+                _fileNameText.Text = string.IsNullOrWhiteSpace(media.FileName) ? $"{isLocal}{UNKNOWN_TITLE}" : $"{isLocal}{media.FileName}";
+                _artistAlbumText.Text = $"{media.ContributeArtist ?? UNKNOWN_ARTIST}{SEPARATOR}{media.Album ?? UNKNOWN_ALBUM}";
+                _fileSizeText.Text = FormatFileSize(media.Size);
+                _durationText.Text = media.Duration == null ? DURATION_UNKNOWN_FULL : media.Duration.Value.ToString(FORMAT_HH_MM_SS);
+                _checkBox.IsChecked = media.IsChecked;
                 return;
             }
 

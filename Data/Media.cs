@@ -4,7 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace PSPSuite.Data;
 
-public partial class Audio : ObservableObject
+public partial class Media : ObservableObject
 {
     public string FileName { get; set; } = string.Empty;
     public string FilePath { get; set; } = string.Empty;

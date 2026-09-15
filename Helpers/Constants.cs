@@ -23,7 +23,6 @@ public static class Constants
     public static readonly SolidColorBrush PRIMARY_TEXT_COLOR = new(Color.Parse("#CCCCCC"));
     public static readonly SolidColorBrush PRIMARY_BUTTON_COLOR = new(Color.Parse("#0E639C"));
     public static readonly SolidColorBrush PRIMARY_HOVER_COLOR = new(Color.Parse("#007ACC"));
-
     public static readonly CornerRadius DEFAULT_CORNER_RADIUS = new(12);
     public static readonly GridLength DEFAULT_SPLITTER_COL_LENGTH = new(5);
     public static readonly GridLength DEFAULT_SPLITTER_ROW_LENGTH = new(5);
@@ -37,7 +36,6 @@ public static class Constants
     public static readonly GridLength DEFAULT_LABEL_WIDTH = new(50.0);
     public static readonly double DEFAULT_ROW_SPACING = 10.0;
     public static readonly double DEFAULT_ITEM_REPEATER_SPACING = 5.0;
-
     public enum ModuleOrder
     {
         MUSIC = 0,
@@ -53,10 +51,14 @@ public static class Constants
         BGUTIL_YTDLP = 2,
     }
 
+    public static readonly string[] AUDIO_PATTERNS = ["*.mp3", "*.wav", "*.wma", "*.aac", "*.ogg", "*.flac", "*.m4a"];
+    public static readonly string[] AUDIO_APPLE_TYPE_IDENTIFIER = ["public.audio"];
+    public static readonly string[] AUDIO_MIME_TYPE = ["audio/*"];
+
     public static readonly FilePickerFileType FILE_TYPE_AUDIO_ALL = new("All audios")
     {
-        Patterns = ["*.mp3", "*.wav", "*.wma", "*.aac", "*.ogg", "*.flac", "*.m4a"],
-        AppleUniformTypeIdentifiers = ["public.audio"],
-        MimeTypes = ["audio/*"]
+        Patterns = AUDIO_PATTERNS,
+        AppleUniformTypeIdentifiers = AUDIO_APPLE_TYPE_IDENTIFIER,
+        MimeTypes = AUDIO_MIME_TYPE
     };
 }

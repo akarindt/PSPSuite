@@ -1,5 +1,7 @@
+using System;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Web;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -26,11 +28,11 @@ public partial class Playlist
 
     private void ItemsRepeater_ElementPrepared(object? sender, ItemsRepeaterElementPreparedEventArgs args)
     {
-        if (args.Element is AudioItemControl control && _audioList != null && args.Index < _audioList.Count)
+        if (args.Element is MediaItemControl control && _audioList != null && args.Index < _audioList.Count)
         {
-            var currentAudio = _audioList[args.Index];
-            control.DataContext = currentAudio;
-            control.AudioItem = currentAudio;
+            var currentMedia = _audioList[args.Index];
+            control.DataContext = currentMedia;
+            control.MediaItem = currentMedia;
         }
     }
 
@@ -53,9 +55,16 @@ public partial class Playlist
         if (string.IsNullOrEmpty(GlobalVar.CookiesTxtFilePath)) return;
         if (string.IsNullOrEmpty(_urlTextBox.Text)) return;
 
-        string url = _urlTextBox.Text.Trim();
-        if (!FnHelper.IsUrl(url)) return;
 
+        string unfilteredUrl = _urlTextBox.Text.Trim();
+        if (!FnHelper.IsUrl(unfilteredUrl)) return;
+
+        var uri = new Uri(unfilteredUrl);
+        var queryParams = HttpUtility.ParseQueryString(uri.Query);
+        string? listId = queryParams["list"];
+        if(listId == null || listId.Trim() == "") return;
+
+        string url = $"https://www.youtube.com/playlist?list={listId}";
         Cursor = new Cursor(StandardCursorType.Wait);
         try
         {
@@ -80,7 +89,7 @@ public partial class Playlist
             var a = playlistData.Entries.Count();
             foreach(var entry in playlistData.Entries)
             {
-                _audioList.Add(new Audio
+                _audioList.Add(new Media
                 {
                     FileName = entry.Title,
                     FilePath = entry.Url,

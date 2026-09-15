@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using PSPSuite.Attributes;
 using PSPSuite.Helpers;
@@ -20,7 +21,7 @@ public partial class Playlist : GenericModule
     private ItemsRepeater _itemsRepeater = new();
     private ScrollViewer _scrollViewer = new(); 
     private CheckBox _selectAllCheckBox = new();
-    private readonly ObservableCollection<Audio> _audioList = new();
+    private readonly ObservableCollection<Media> _audioList = new();
 
 
     private enum ClearSendBtnGridRowSetting
@@ -172,9 +173,9 @@ public partial class Playlist : GenericModule
         {
             args.TemplateKey = "AudioItemKey";
         };
-        elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Audio>((audio, namescope) =>
+        elementFactory.Templates["AudioItemKey"] = new FuncDataTemplate<Media>((media, namescope) =>
         {
-            return new AudioItemControl();
+            return new MediaItemControl();
         });
 
         _itemsRepeater = new ItemsRepeater
@@ -183,9 +184,18 @@ public partial class Playlist : GenericModule
             Layout = new StackLayout { Spacing = Constants.DEFAULT_ITEM_REPEATER_SPACING },
             ItemTemplate = elementFactory
         };
+
+        var repeaterBorder = new Border
+        {
+            Child = _itemsRepeater,
+            Background = Constants.PRIMARY_BACKGROUND_COLOR,
+            CornerRadius = Constants.DEFAULT_CORNER_RADIUS,
+            Padding = Constants.DEFAULT_PADDING,
+        };
+
         _scrollViewer = new ScrollViewer
         {
-            Content = _itemsRepeater,
+            Content = repeaterBorder,
             HorizontalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Disabled,
             VerticalScrollBarVisibility = Avalonia.Controls.Primitives.ScrollBarVisibility.Auto
         };

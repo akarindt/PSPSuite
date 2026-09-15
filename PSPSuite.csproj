@@ -20,7 +20,7 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="DialogHost.Avalonia" Version="0.12.3" />
-    <PackageReference Include="FluentIcons.Avalonia" Version="2.1.337" />
+    <PackageReference Include="FluentIcons.Avalonia" Version="2.1.341" />
     <PackageReference Include="LibGit2Sharp" Version="0.32.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
     <PackageReference Include="System.Management" Version="10.0.11" />

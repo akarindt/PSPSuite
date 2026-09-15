@@ -56,10 +56,9 @@ public partial class MainWindow
         UsbWatcher.InitUsbListener();
         this.SubscribeModuleEvents();
 
-        await base.InitAsync();
         await _depLoader.LoadDepsAsync();
-
         this.Closed += Clean;
+        await base.InitAsync();
     }
 
     public async Task BrowseBtn_Clicked(object? sender, RoutedEventArgs e)
@@ -153,47 +152,40 @@ public partial class MainWindow
                     string targetFilePath = Path.Combine(outputFolder, cleanFileName);
 
                     if (File.Exists(targetFilePath)) continue;
+                    var isAudioOnly = !Constants.AUDIO_PATTERNS.Contains(extension);
+                    if (!isAudioOnly) continue;
 
-                    var extensionless = extension.TrimStart('.').ToLowerInvariant();
-                    var isAudioOnly = !new[] { "mp3", "wav", "m4a" }.Contains(extensionless);
 
-                    if (isAudioOnly)
+                    var ffmpegArgs = $"-y -i \"{file.FilePath}\" -map 0:a -map 0:v? -c:v copy -disposition:v attached_pic -b:a 192k \"{targetFilePath}\"";
+                    using var ffmpegProcess = new Process
                     {
-                        var ffmpegArgs = $"-y -i \"{file.FilePath}\" -map 0:a -map 0:v? -c:v copy -disposition:v attached_pic -b:a 192k \"{targetFilePath}\"";
-                        using var ffmpegProcess = new Process
+                        StartInfo = new ProcessStartInfo
                         {
-                            StartInfo = new ProcessStartInfo
-                            {
-                                FileName = ffmpegPath,
-                                Arguments = ffmpegArgs,
-                                UseShellExecute = false,
-                                CreateNoWindow = true,
-                                RedirectStandardOutput = true,
-                                RedirectStandardError = true,
-                                StandardOutputEncoding = Encoding.UTF8,
-                                StandardErrorEncoding = Encoding.UTF8
-                            }
-                        };
+                            FileName = ffmpegPath,
+                            Arguments = ffmpegArgs,
+                            UseShellExecute = false,
+                            CreateNoWindow = true,
+                            RedirectStandardOutput = true,
+                            RedirectStandardError = true,
+                            StandardOutputEncoding = Encoding.UTF8,
+                            StandardErrorEncoding = Encoding.UTF8
+                        }
+                    };
 
-                        ffmpegProcess.OutputDataReceived += (s, e) =>
-                        {
-                            if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                        };
-
-                        ffmpegProcess.ErrorDataReceived += (s, e) =>
-                        {
-                            if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                        };
-
-                        ffmpegProcess.Start();
-                        ffmpegProcess.BeginOutputReadLine();
-                        ffmpegProcess.BeginErrorReadLine();
-                        ffmpegProcess.WaitForExit();
-                    }
-                    else
+                    ffmpegProcess.OutputDataReceived += (s, e) =>
                     {
-                        File.Copy(file.FilePath, targetFilePath, overwrite: false);
-                    }
+                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
+                    };
+
+                    ffmpegProcess.ErrorDataReceived += (s, e) =>
+                    {
+                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
+                    };
+
+                    ffmpegProcess.Start();
+                    ffmpegProcess.BeginOutputReadLine();
+                    ffmpegProcess.BeginErrorReadLine();
+                    ffmpegProcess.WaitForExit();
 
                     using (var tfile = TagLib.File.Create(targetFilePath))
                     {
@@ -223,7 +215,6 @@ public partial class MainWindow
                 File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, ytList.Select(x => x.FilePath)));
 
                 string ytOutputFormat = Path.Combine(outputFolder, "%(title)s.tmp.%(ext)s");
-
                 using var ytProcess = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -381,6 +372,15 @@ public partial class MainWindow
         _queueListData.Clear();
         _queueList.ItemsSource = null;
         _queueList.ItemsSource = _queueListData;
+
+        if (_mainTabControl.SelectedContent is Playlist or Music)
+        {
+            UsbWatcher.SetActiveCategory(PspContentCategory.MUSIC);
+        }
+        else if (_mainTabControl.SelectedContent is Video)
+        {
+            UsbWatcher.SetActiveCategory(PspContentCategory.VIDEO);
+        }
     }
 
     protected override void SubscribeModuleEvents()
@@ -399,17 +399,17 @@ public partial class MainWindow
         _queueList.ItemsSource = null;
         _queueListData.Clear();
 
-        if (items is List<Audio> audioList)
+        if (items is List<Media> mediaList)
         {
-            foreach (var audio in audioList)
+            foreach (var media in mediaList)
             {
                 _queueListData.Add(new QueueItem
                 {
-                    FileName = audio.FileName,
-                    FilePath = audio.FilePath,
+                    FileName = media.FileName,
+                    FilePath = media.FilePath,
                     FileType = QueueItemType.MUSIC,
                     Status = QueueItemStatus.READY,
-                    IsLocal = audio.IsLocal
+                    IsLocal = media.IsLocal
                 });
             }
         }
