@@ -123,6 +123,12 @@ public partial class MainWindow
     {
         if (_mainTabControl.SelectedContent is Music) await SendMusic();
         if (_mainTabControl.SelectedContent is Playlist) await SendPlaylist();
+        if (_mainTabControl.SelectedContent is Video) await SendVideo();
+    }
+
+    private async Task SendVideo()
+    {
+        if(!await CheckSend()) return;
     }
 
     private async Task SendMusic()

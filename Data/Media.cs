@@ -15,6 +15,7 @@ public partial class Media : ObservableObject
     public string ContributeArtist { get; set; } = string.Empty;
     public string Album { get; set; } = string.Empty;
     public bool IsLocal { get; set; }
+    public string FolderName { get; set; } = string.Empty;
 
     [ObservableProperty]
     private bool _isChecked;

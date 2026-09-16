@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Transactions;
 using YoutubeDLSharp;
@@ -139,5 +140,29 @@ public static class FnHelper
                  .Normalize(System.Text.NormalizationForm.FormC)
                  .Replace('Đ', 'D')
                  .Replace('đ', 'd');
+    }
+
+
+    public static string CleanTitleForFolder(string title, int maxLength = 100)
+    {
+        if (string.IsNullOrWhiteSpace(title)) return $"Untitled_Folder_{DateTime.Now:yyyyMMdd_HHmmss}";
+        string invalidChars = Regex.Escape(new string(Path.GetInvalidFileNameChars()) + "#%&{}");
+        string cleaned = Regex.Replace(NormalizeText(title), "[" + invalidChars + "]", "");
+        cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim();
+        if (cleaned.Length > maxLength) cleaned = cleaned.Substring(0, maxLength).Trim();
+        return string.IsNullOrEmpty(cleaned) ? "Untitled_Folder" : cleaned;
+    }
+
+    public static string GetFolderOrEmpty(string filePath)
+    {
+        string fullPath = Path.GetFullPath(filePath);
+        string? parentDirectory = Path.GetDirectoryName(fullPath);
+        if(parentDirectory == null || parentDirectory.Trim() == "") return "";
+ 
+        string? root = Path.GetPathRoot(fullPath);
+        if(root == null || root.Trim() == "") return "";
+
+        if (string.Equals(parentDirectory, root, StringComparison.OrdinalIgnoreCase)) return "";
+        return parentDirectory;
     }
 }

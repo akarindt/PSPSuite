@@ -84,7 +84,7 @@ public partial class Video
                     var result = await ytdlp.RunVideoDataFetch(url, overrideOptions: options);
                     if (!result.Success)
                     {
-                        await MessageBox.Err("Error", "Cannot fetch playlist data");
+                        await MessageBox.Err("Error", result.ErrorOutput.First());
                         return;
                     }
 
@@ -105,6 +105,7 @@ public partial class Video
                             Duration = FnHelper.FormatFloatToTimeSpan(entry.Duration),
                             ContributeArtist = entry.AlbumArtist,
                             Album = entry.Album,
+                            FolderName = FnHelper.CleanTitleForFolder(entry.Title),
                             IsLocal = false,
                             IsChecked = false
                         });
@@ -120,7 +121,7 @@ public partial class Video
                     var result = await ytdlp.RunVideoDataFetch(url, overrideOptions: options);
                     if (!result.Success)
                     {
-                        await MessageBox.Err("Error", "Cannot fetch data");
+                        await MessageBox.Err("Error", result.ErrorOutput.First());
                         return;
                     }
 
@@ -135,6 +136,7 @@ public partial class Video
                         Duration = FnHelper.FormatFloatToTimeSpan(data.Duration),
                         ContributeArtist = data.AlbumArtist,
                         Album = data.Album,
+                        FolderName = FnHelper.CleanTitleForFolder(data.Title),
                         IsLocal = false,
                         IsChecked = false
                     });
@@ -220,7 +222,8 @@ public partial class Video
                     Size = size,
                     DateCreated = basicInfo.DateCreated,
                     DateModified = basicInfo.DateModified,
-                    IsChecked = false
+                    IsChecked = false,
+                    FolderName = FnHelper.GetFolderOrEmpty(file.Path.LocalPath)
                 };
             }, ct);
 

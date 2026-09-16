@@ -170,7 +170,7 @@ public partial class Music
             var result = await ytdlp.RunVideoDataFetch(url, overrideOptions: options);
             if (!result.Success)
             {
-                await MessageBox.Err("Error", "Cannot fetch data");
+                await MessageBox.Err("Error", result.ErrorOutput.First());
                 return;
             }
 
