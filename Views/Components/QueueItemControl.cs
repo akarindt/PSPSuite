@@ -24,8 +24,6 @@ public class QueueItemControl : Control
 
     private readonly Border _rootBorder;
     private readonly TextBlock _fileNameTextBlock;
-    private readonly TextBlock _statusTextBlock;
-    private readonly TextBlock _fileTypeTextBlock;
     private readonly TextBlock _isLocalTextBlock;
 
     public static readonly StyledProperty<QueueItem?> QueueItemProperty =
@@ -40,16 +38,14 @@ public class QueueItemControl : Control
     public QueueItemControl()
     {
         _isLocalTextBlock = CreatePillTextBlock();
-        _fileTypeTextBlock = CreatePillTextBlock();
 
         var pillBorderLocal = WrapInPill(_isLocalTextBlock);
-        var pillBorderType = WrapInPill(_fileTypeTextBlock);
 
         var topPillsPanel = new StackPanel
         {
             Orientation = Orientation.Horizontal,
             Spacing = PILLS_SPACING,
-            Children = { pillBorderLocal, pillBorderType }
+            Children = { pillBorderLocal }
         };
 
         _fileNameTextBlock = new TextBlock
@@ -60,21 +56,13 @@ public class QueueItemControl : Control
             FontSize = (double)QueueFontSize.FILE_NAME
         };
 
-        _statusTextBlock = new TextBlock
-        {
-            FontSize = (double)QueueFontSize.STATUS,
-            Foreground = Constants.PRIMARY_TEXT_COLOR,
-            VerticalAlignment = VerticalAlignment.Center
-        };
-
         var mainStackPanel = new StackPanel
         {
             Spacing = MAIN_STACK_SPACING,
             Children =
             {
                 topPillsPanel,
-                _fileNameTextBlock,
-                _statusTextBlock
+                _fileNameTextBlock
             }
         };
 
@@ -88,7 +76,7 @@ public class QueueItemControl : Control
 
         VisualChildren.Add(_rootBorder);
         LogicalChildren.Add(_rootBorder);
-        
+
         this.Bind(QueueItemProperty, new Binding());
     }
 
@@ -130,27 +118,9 @@ public class QueueItemControl : Control
             var queue = change.GetNewValue<QueueItem?>();
             if (queue != null)
             {
-                string status = queue.Status switch
-                {
-                    QueueItemStatus.READY => "Ready",
-                    QueueItemStatus.COPYING => "Copying...",
-                    QueueItemStatus.COMPLETE => "Complete",
-                    _ => "Err"
-                };
-
-                string type = queue.FileType switch
-                {
-                    QueueItemType.MUSIC => "Music",
-                    QueueItemType.VIDEO => "Video",
-                    QueueItemType.PLAYLIST => "Playlist",
-                    _ => "Err"
-                };
-
                 string local = queue.IsLocal ? "Local" : "YT";
 
                 _fileNameTextBlock.Text = queue.FileName;
-                _fileTypeTextBlock.Text = type;
-                _statusTextBlock.Text = status;
                 _isLocalTextBlock.Text = local;
                 return;
             }

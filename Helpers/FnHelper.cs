@@ -5,9 +5,6 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using System.Transactions;
-using YoutubeDLSharp;
 
 namespace PSPSuite.Helpers;
 
@@ -153,16 +150,16 @@ public static class FnHelper
         return string.IsNullOrEmpty(cleaned) ? "Untitled_Folder" : cleaned;
     }
 
-    public static string GetFolderOrEmpty(string filePath)
+    public static string GetFolderOrDefault(string filePath)
     {
         string fullPath = Path.GetFullPath(filePath);
         string? parentDirectory = Path.GetDirectoryName(fullPath);
-        if(parentDirectory == null || parentDirectory.Trim() == "") return "";
- 
-        string? root = Path.GetPathRoot(fullPath);
-        if(root == null || root.Trim() == "") return "";
+        if (parentDirectory == null || parentDirectory.Trim() == "") return "Local_Videos";
 
-        if (string.Equals(parentDirectory, root, StringComparison.OrdinalIgnoreCase)) return "";
-        return parentDirectory;
+        string? root = Path.GetPathRoot(fullPath);
+        if (root == null || root.Trim() == "") return "Local_Videos";
+
+        if (string.Equals(parentDirectory, root, StringComparison.OrdinalIgnoreCase)) return "Local_Videos";
+        return parentDirectory.Trim();
     }
 }

@@ -1,9 +1,8 @@
-using System;
-using System.IO;
-using System.Reflection.Metadata;
-using System.Threading.Tasks;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
+using System;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace PSPSuite.Dependencies;
 
@@ -16,7 +15,7 @@ public class Deno : DependencyItem
     public override async Task DownloadItemAsync()
     {
         var savedDir = Constants.DEPENDENCIES_FOLDER;
-        if(!File.Exists(Path.Combine(savedDir, FnHelper.GetDenoBinary()))) await YoutubeDLSharp.Utils.DownloadDeno(savedDir);
+        if (!File.Exists(Path.Combine(savedDir, FnHelper.GetDenoBinary()))) await YoutubeDLSharp.Utils.DownloadDeno(savedDir);
         Console.WriteLine("[Deno_DownloadItemAsync]::Deno - Download success");
     }
 

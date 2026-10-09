@@ -1,10 +1,10 @@
-using System;
-using System.IO;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using Avalonia.Styling;
+using System;
+using System.IO;
 
 namespace PSPSuite.Helpers;
 
@@ -61,4 +61,28 @@ public static class Constants
         AppleUniformTypeIdentifiers = AUDIO_APPLE_TYPE_IDENTIFIER,
         MimeTypes = AUDIO_MIME_TYPE
     };
+
+    public static readonly string[] VIDEO_PATTERNS = ["*.mp4", "*.avi", "*.mkv", "*.mov", "*.wmv", "*.flv", "*.webm", "*.m4v", "*.3gp"];
+    public static readonly string[] VIDEO_APPLE_TYPE_IDENTIFIER = ["public.movie", "public.audiovisual-content"];
+    public static readonly string[] VIDEO_MIME_TYPE = [
+        "video/mp4",
+        "video/x-matroska",
+        "video/webm",
+        "video/quicktime",
+        "video/x-msvideo",
+        "video/x-ms-wmv",
+        "video/x-flv",
+        "video/3gpp",
+        "video/x-m4v"
+    ];
+
+    public static readonly FilePickerFileType FILE_TYPE_VIDEO_ALL = new("All videos")
+    {
+        Patterns = VIDEO_PATTERNS,
+        AppleUniformTypeIdentifiers = VIDEO_APPLE_TYPE_IDENTIFIER,
+        MimeTypes = VIDEO_MIME_TYPE
+    };
+
+    public static readonly string FFMPEG_PATH = Path.Combine(DEPENDENCIES_FOLDER, YoutubeDLSharp.Utils.FfmpegBinaryName);
+    public static readonly string YTDLP_PATH = Path.Combine(DEPENDENCIES_FOLDER, YoutubeDLSharp.Utils.YtDlpBinaryName);
 }

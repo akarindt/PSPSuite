@@ -1,3 +1,4 @@
+using Avalonia.Threading;
 using System;
 using System.IO;
 using System.Linq;
@@ -5,8 +6,6 @@ using System.Management;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Rendering;
-using Avalonia.Threading;
 
 namespace PSPSuite.Helpers;
 

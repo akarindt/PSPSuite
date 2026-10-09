@@ -1,6 +1,5 @@
-using System;
-using Avalonia.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
+using System;
 
 namespace PSPSuite.Data;
 

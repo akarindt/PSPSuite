@@ -1,9 +1,8 @@
+using PSPSuite.Data;
+using PSPSuite.Helpers;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using PSPSuite.Data;
-using PSPSuite.Helpers;
-using YoutubeDLSharp;
 
 namespace PSPSuite.Dependencies;
 

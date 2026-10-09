@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -8,6 +7,7 @@ using DialogHostAvalonia;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System.Collections.ObjectModel;
 
 namespace PSPSuite.Views.Windows;
 

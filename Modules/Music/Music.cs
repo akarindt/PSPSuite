@@ -1,23 +1,16 @@
-using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Management;
-using System.Runtime;
-using System.Runtime.Versioning;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Web;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media.Imaging;
 using Avalonia.Platform.Storage;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime;
+using System.Threading.Tasks;
+using System.Web;
 using YoutubeDLSharp;
 
 namespace PSPSuite.Modules;
@@ -67,7 +60,7 @@ public partial class Music
         await Parallel.ForEachAsync(Enumerable.Range(0, files.Count), parallelOptions, async (i, ct) =>
         {
             var file = files[i];
-            var path = file.Path.LocalPath;
+            var path = file.GetLocalPath();
             var basicInfo = await file.GetBasicPropertiesAsync();
 
             var audioItem = await Task.Run(() =>
@@ -94,7 +87,7 @@ public partial class Music
                 return new Media
                 {
                     FileName = title,
-                    FilePath = file.Path.LocalPath,
+                    FilePath = file.GetLocalPath(),
                     Duration = duration,
                     ContributeArtist = artist,
                     Album = album,
@@ -155,7 +148,7 @@ public partial class Music
         var uri = new Uri(unfilteredUrl);
         var queryParams = HttpUtility.ParseQueryString(uri.Query);
         string? vId = queryParams["v"];
-        if(vId == null || vId.Trim() == "") return;
+        if (vId == null || vId.Trim() == "") return;
 
         string url = $"https://www.youtube.com/watch?v={vId}";
         Cursor = new Cursor(StandardCursorType.Wait);

@@ -1,9 +1,8 @@
+using Avalonia.Controls;
+using Avalonia.Interactivity;
 using System;
 using System.Collections;
 using System.Threading.Tasks;
-using Avalonia.Controls;
-using Avalonia.Interactivity;
-using PSPSuite.Helpers;
 
 namespace PSPSuite.Modules;
 

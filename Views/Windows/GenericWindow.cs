@@ -1,11 +1,8 @@
-using System.Collections;
-using System.ComponentModel;
-using System.Threading.Tasks;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media;
-using Avalonia.Styling;
 using PSPSuite.Helpers;
+using System.Collections;
+using System.Threading.Tasks;
 
 namespace PSPSuite.Views.Windows;
 

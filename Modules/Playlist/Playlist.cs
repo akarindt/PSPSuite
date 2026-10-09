@@ -1,13 +1,13 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Web;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Web;
 using YoutubeDLSharp;
 using YoutubeDLSharp.Metadata;
 
@@ -62,7 +62,7 @@ public partial class Playlist
         var uri = new Uri(unfilteredUrl);
         var queryParams = HttpUtility.ParseQueryString(uri.Query);
         string? listId = queryParams["list"];
-        if(listId == null || listId.Trim() == "") return;
+        if (listId == null || listId.Trim() == "") return;
 
         string url = $"https://www.youtube.com/playlist?list={listId}";
         Cursor = new Cursor(StandardCursorType.Wait);
@@ -87,7 +87,7 @@ public partial class Playlist
 
             VideoData playlistData = result.Data;
             var a = playlistData.Entries.Count();
-            foreach(var entry in playlistData.Entries)
+            foreach (var entry in playlistData.Entries)
             {
                 _audioList.Add(new Media
                 {

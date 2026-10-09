@@ -1,13 +1,11 @@
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
-using PSPSuite.Attributes;
-using PSPSuite.Helpers;
-using Avalonia.Layout;
-using System.Collections.ObjectModel;
-using PSPSuite.Data;
 using Avalonia.Controls.Templates;
+using Avalonia.Layout;
+using PSPSuite.Attributes;
+using PSPSuite.Data;
+using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System.Collections.ObjectModel;
 
 namespace PSPSuite.Modules;
 

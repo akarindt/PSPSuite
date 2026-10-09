@@ -1,11 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Runtime;
-using System.Threading;
-using System.Threading.Tasks;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -13,6 +5,11 @@ using Avalonia.Platform.Storage;
 using PSPSuite.Data;
 using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Runtime;
+using System.Threading.Tasks;
 using YoutubeDLSharp;
 
 namespace PSPSuite.Modules;
@@ -166,17 +163,11 @@ public partial class Video
         var topLevel = TopLevel.GetTopLevel(this);
         if (topLevel == null) return;
 
-        var videoExtensions = new[] { "*.mp4", "*.avi", "*.mkv", "*.mov", "*.wmv", "*.flv", "*.webm", "*.m4v", "*.3gp" };
-        var fileTypeFilter = videoExtensions.Select(ext => new FilePickerFileType(ext.Replace("*.", "").ToUpperInvariant())
-        {
-            Patterns = [ext]
-        }).ToArray();
-
         var files = await topLevel.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
             Title = "Open video files",
             AllowMultiple = true,
-            FileTypeFilter = fileTypeFilter
+            FileTypeFilter = [Constants.FILE_TYPE_VIDEO_ALL]
         });
 
         _selectAllCheckBox.IsChecked = false;
@@ -191,7 +182,7 @@ public partial class Video
         await Parallel.ForEachAsync(Enumerable.Range(0, files.Count), parallelOptions, async (i, ct) =>
         {
             var file = files[i];
-            var path = file.Path.LocalPath;
+            var path = file.GetLocalPath();
             var basicInfo = await file.GetBasicPropertiesAsync();
 
             var videoItem = await Task.Run(() =>
@@ -208,13 +199,13 @@ public partial class Video
                 }
                 catch
                 {
-                    
+
                 }
 
                 return new Media
                 {
                     FileName = title,
-                    FilePath = file.Path.LocalPath,
+                    FilePath = file.GetLocalPath(),
                     Duration = duration,
                     ContributeArtist = string.Empty,
                     Album = string.Empty,
@@ -223,7 +214,7 @@ public partial class Video
                     DateCreated = basicInfo.DateCreated,
                     DateModified = basicInfo.DateModified,
                     IsChecked = false,
-                    FolderName = FnHelper.GetFolderOrEmpty(file.Path.LocalPath)
+                    FolderName = FnHelper.GetFolderOrDefault(file.GetLocalPath())
                 };
             }, ct);
 

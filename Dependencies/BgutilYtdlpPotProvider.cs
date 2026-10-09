@@ -1,10 +1,10 @@
+using LibGit2Sharp;
+using PSPSuite.Data;
+using PSPSuite.Helpers;
 using System;
 using System.Diagnostics;
 using System.IO;
 using System.Threading.Tasks;
-using LibGit2Sharp;
-using PSPSuite.Data;
-using PSPSuite.Helpers;
 
 namespace PSPSuite.Dependencies;
 
@@ -54,7 +54,7 @@ public class BgutilYtdlpPotProvider : DependencyItem
     {
         string baseDir = Constants.DEPENDENCIES_FOLDER;
         string denoPath = Path.Combine(baseDir, FnHelper.GetDenoBinary());
-        
+
         if (FnHelper.IsDirectoryEmpty(Path.Combine(_serverFolder, "node_modules")))
         {
             using (var installProcess = new Process

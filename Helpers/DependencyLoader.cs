@@ -1,10 +1,8 @@
+using PSPSuite.Data;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Avalonia.Interactivity;
-using PSPSuite.Data;
-using PSPSuite.Views.Windows;
 
 namespace PSPSuite.Helpers;
 

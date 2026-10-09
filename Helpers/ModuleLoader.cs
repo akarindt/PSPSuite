@@ -1,11 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
 using Avalonia.Controls;
 using Microsoft.Extensions.DependencyInjection;
 using PSPSuite.Attributes;
 using PSPSuite.Modules;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace PSPSuite.Helpers;
 
@@ -34,7 +34,7 @@ public static class ModuleLoader
             Console.WriteLine($"[ModuleLoader]::Loaded - {item.Instance.GetType().Name}");
         }
     }
-    
+
     public static void LoadModule(this TabControl tabControl, IServiceProvider serviceProvider)
     {
         var modules = serviceProvider.GetServices<GenericModule>();

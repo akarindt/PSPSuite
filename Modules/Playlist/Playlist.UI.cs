@@ -1,12 +1,11 @@
-using Avalonia;
 using Avalonia.Controls;
-using PSPSuite.Attributes;
-using PSPSuite.Helpers;
-using Avalonia.Layout;
-using System.Collections.ObjectModel;
-using PSPSuite.Data;
 using Avalonia.Controls.Templates;
+using Avalonia.Layout;
+using PSPSuite.Attributes;
+using PSPSuite.Data;
+using PSPSuite.Helpers;
 using PSPSuite.Views.Components;
+using System.Collections.ObjectModel;
 
 namespace PSPSuite.Modules;
 
@@ -19,7 +18,7 @@ public partial class Playlist : GenericModule
     private Button _clearListBtn = new();
     private Button _toQueueBtn = new();
     private ItemsRepeater _itemsRepeater = new();
-    private ScrollViewer _scrollViewer = new(); 
+    private ScrollViewer _scrollViewer = new();
     private CheckBox _selectAllCheckBox = new();
     private readonly ObservableCollection<Media> _audioList = new();
 

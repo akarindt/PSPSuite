@@ -1,8 +1,7 @@
-using System;
-using System.Threading.Tasks;
-using Avalonia.Controls;
 using DialogHostAvalonia;
 using PSPSuite.Views.Components;
+using System;
+using System.Threading.Tasks;
 
 namespace PSPSuite.Helpers;
 

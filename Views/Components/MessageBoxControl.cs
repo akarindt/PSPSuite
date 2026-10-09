@@ -1,4 +1,3 @@
-using System;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -8,6 +7,7 @@ using Avalonia.Reactive;
 using FluentIcons.Avalonia;
 using FluentIcons.Common;
 using PSPSuite.Helpers;
+using System;
 
 namespace PSPSuite.Views.Components;
 
@@ -47,7 +47,7 @@ public class MessageBoxControl : UserControl
     private static readonly Thickness TITLE_MARGIN = new(0, 0, 0, 8);
     private static readonly Thickness CANCEL_BUTTON_BORDER = new(1);
 
-    
+
     private readonly TextBlock _titleTextBlock;
     private readonly TextBlock _messageTextBlock;
     private readonly SymbolIcon _symbolIcon;
