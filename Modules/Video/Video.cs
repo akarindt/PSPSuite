@@ -76,7 +76,7 @@ public partial class Video
             {
                 string? listId = queryParams["list"];
                 string url = buildUrl(listId, "https://www.youtube.com/playlist?list");
-                if (url.Contains("="))
+                if (url.Contains('='))
                 {
                     var result = await ytdlp.RunVideoDataFetch(url, overrideOptions: options);
                     if (!result.Success)
@@ -102,7 +102,7 @@ public partial class Video
                             Duration = FnHelper.FormatFloatToTimeSpan(entry.Duration),
                             ContributeArtist = entry.AlbumArtist,
                             Album = entry.Album,
-                            FolderName = FnHelper.CleanTitleForFolder(entry.Title),
+                            FolderName = FnHelper.CleanTitleForFolder(playlistData.Title),
                             IsLocal = false,
                             IsChecked = false
                         });
@@ -113,7 +113,7 @@ public partial class Video
             {
                 string? vId = queryParams["v"];
                 string url = buildUrl(vId, "https://www.youtube.com/watch?v");
-                if (url.Contains("="))
+                if (url.Contains('='))
                 {
                     var result = await ytdlp.RunVideoDataFetch(url, overrideOptions: options);
                     if (!result.Success)

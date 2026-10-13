@@ -137,7 +137,7 @@ public partial class MainWindow
 
         if (localList.Count > 0)
         {
-            await Task.Run(async () =>
+            await Task.Run(() =>
             {
                 foreach (var file in localList)
                 {
@@ -205,8 +205,6 @@ public partial class MainWindow
                 File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, ytList.Select(x => x.FilePath)));
 
                 string ytOutputFormat = Path.Combine(tempYtDir, "%(title)s.tmp.%(ext)s");
-                string ffmpegArgs = "-vf \"scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2\" -c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -b:v 768k -ar 44100 -ac 2 -b:a 128k";
-
                 using var ytProcess = new Process
                 {
                     StartInfo = new ProcessStartInfo
@@ -218,7 +216,14 @@ public partial class MainWindow
                         RedirectStandardError = true,
                         StandardOutputEncoding = Encoding.UTF8,
                         StandardErrorEncoding = Encoding.UTF8,
-                        Arguments = $"-f \"bv*+ba/b\" --recode-video mp4 -a \"{linkTxtPath}\" --cookies \"{cookiesFile}\" --postprocessor-args \"ffmpeg:{ffmpegArgs}\" -o \"{ytOutputFormat}\" --sleep-requests 1 --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\""
+                        Arguments = $"-f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" " +
+                                    $"--merge-output-format mp4 " +
+                                    $"-a \"{linkTxtPath}\" " +
+                                    $"--cookies \"{cookiesFile}\" " +
+                                    $"--postprocessor-args \"ffmpeg:-c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -vf scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2 -b:v 768k -c:a aac -ac 2 -b:a 128k -ar 48000\" " +
+                                    $"-o \"{ytOutputFormat}\" " +
+                                    $"--sleep-requests 1 " +
+                                    $"--extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\""
                     }
                 };
 

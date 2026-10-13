@@ -1,3 +1,6 @@
+using Avalonia.Controls;
+using Avalonia.Media.Imaging;
+using Avalonia.Platform;
 using System;
 using System.IO;
 using System.Linq;
@@ -10,6 +13,17 @@ namespace PSPSuite.Helpers;
 
 public static class FnHelper
 {
+    public static void LoadIcon(this Window window)
+    {
+        var assetUri = new Uri("avares://PSPSuite/Assets/app-icon.ico");
+        using var stream = AssetLoader.Open(assetUri);
+
+        var bitmap = new Bitmap(stream);
+        var newIcon = new WindowIcon(bitmap);
+
+        window.Icon = newIcon;
+    }
+
     public static int GetOperatingSystemChosenFreePort()
     {
         using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
@@ -147,7 +161,7 @@ public static class FnHelper
         string cleaned = Regex.Replace(NormalizeText(title), "[" + invalidChars + "]", "");
         cleaned = Regex.Replace(cleaned, @"\s+", " ").Trim();
         if (cleaned.Length > maxLength) cleaned = cleaned.Substring(0, maxLength).Trim();
-        return string.IsNullOrEmpty(cleaned) ? "Untitled_Folder" : cleaned;
+        return string.IsNullOrEmpty(cleaned) ? "Untitled_Folder" : cleaned.Replace(' ', '_');
     }
 
     public static string GetFolderOrDefault(string filePath)

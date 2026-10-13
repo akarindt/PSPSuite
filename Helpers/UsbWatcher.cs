@@ -6,6 +6,7 @@ using System.Management;
 using System.Runtime.Versioning;
 using System.Threading;
 using System.Threading.Tasks;
+using Usb.Events;
 
 namespace PSPSuite.Helpers;
 
@@ -18,13 +19,10 @@ public enum PspContentCategory
 public static class UsbWatcher
 {
     private static bool _isInitialized;
-    private static ManagementEventWatcher? _usbWatcherWin;
-    private static CancellationTokenSource? _unixCts;
+    private static IUsbEventWatcher? _usbEventWatcher;
     public static event Action<string>? OnPspPathChanged;
     public static string CurrentPspPath { get; private set; } = string.Empty;
     public static PspContentCategory ActiveCategory { get; private set; } = PspContentCategory.MUSIC;
-    private static readonly int DEFAULT_DELAY = 3000;
-
     public static void InitUsbListener()
     {
 #if DEBUG
@@ -33,15 +31,7 @@ public static class UsbWatcher
         if (_isInitialized) return;
 
         UpdateAndNotifyPath(ActiveCategory);
-
-        if (OperatingSystem.IsWindows())
-        {
-            StartWindowsUsbWatcher();
-        }
-        else if (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-        {
-            StartUnixUsbWatcher();
-        }
+        StartUsbWatcher();
 
         AppDomain.CurrentDomain.ProcessExit += (s, e) => Cleanup();
         _isInitialized = true;
@@ -51,29 +41,12 @@ public static class UsbWatcher
 #endif
     }
 
-    [SupportedOSPlatform("windows")]
-    private static void StartWindowsUsbWatcher()
+    private static void StartUsbWatcher()
     {
-        var query = new WqlEventQuery("SELECT * FROM Win32_VolumeChangeEvent WHERE EventType = 2 OR EventType = 3");
-        _usbWatcherWin = new ManagementEventWatcher(query);
-
-        _usbWatcherWin.EventArrived += (sender, e) => Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
-        _usbWatcherWin.Start();
-    }
-
-    private static void StartUnixUsbWatcher()
-    {
-        _unixCts = new CancellationTokenSource();
-        var token = _unixCts.Token;
-
-        Task.Run(async () =>
-        {
-            while (!token.IsCancellationRequested)
-            {
-                Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
-                await Task.Delay(DEFAULT_DELAY, token);
-            }
-        }, token);
+        _usbEventWatcher = new UsbEventWatcher();
+        _usbEventWatcher.UsbDeviceAdded += (_, _) => Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
+        _usbEventWatcher.UsbDeviceRemoved += (_, _) => Dispatcher.UIThread.Post(() => UpdateAndNotifyPath(ActiveCategory));
+        _usbEventWatcher.Start();
     }
 
     public static void SetActiveCategory(PspContentCategory category)
@@ -136,18 +109,9 @@ public static class UsbWatcher
 #endif
         if (!_isInitialized) return;
 
-        if (OperatingSystem.IsWindows() && _usbWatcherWin != null)
+        if (_usbEventWatcher != null)
         {
-            _usbWatcherWin.Stop();
-            _usbWatcherWin.Dispose();
-            _usbWatcherWin = null;
-        }
-
-        if (_unixCts != null)
-        {
-            _unixCts.Cancel();
-            _unixCts.Dispose();
-            _unixCts = null;
+            _usbEventWatcher.Dispose();
         }
 
         _isInitialized = false;

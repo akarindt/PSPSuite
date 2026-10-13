@@ -1,34 +1,43 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <OutputType>WinExe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
-    <Nullable>enable</Nullable>
-    <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AvaloniaDeclarativeEnableViewFactory>false</AvaloniaDeclarativeEnableViewFactory>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>WinExe</OutputType>
+		<TargetFramework>net9.0</TargetFramework>
+		<Nullable>enable</Nullable>
+		<ApplicationManifest>app.manifest</ApplicationManifest>
+		<AvaloniaDeclarativeEnableViewFactory>false</AvaloniaDeclarativeEnableViewFactory>
+		<Version>1.0.0</Version>
+		<AssemblyVersion>1.0.0.0</AssemblyVersion>
+		<FileVersion>1.0.0.0</FileVersion>
+		<InformationalVersion>1.0.0-off-20261013-1553</InformationalVersion>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Avalonia" Version="12.1.1" />
-    <PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="12.0.0" />
-    <PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
-    <PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
-    <PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
-      <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
-      <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
-    </PackageReference>
-    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
-    <PackageReference Include="DialogHost.Avalonia" Version="0.12.3" />
-    <PackageReference Include="FluentIcons.Avalonia" Version="2.1.341" />
-    <PackageReference Include="LibGit2Sharp" Version="0.32.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
-    <PackageReference Include="System.Management" Version="10.0.11" />
-    <PackageReference Include="TagLibSharp" Version="2.3.0" />
-    <PackageReference Include="YoutubeDLSharp" Version="1.2.0" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="12.1.1" />
+		<PackageReference Include="Avalonia.AvaloniaEdit" Version="12.0.0" />
+		<PackageReference Include="Avalonia.Controls.ItemsRepeater" Version="12.0.0" />
+		<PackageReference Include="Avalonia.Desktop" Version="12.1.1" />
+		<PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.1" />
+		<PackageReference Include="Avalonia.Fonts.Inter" Version="12.1.1" />
+		<PackageReference Include="AvaloniaUI.DiagnosticsSupport" Version="2.2.3">
+			<IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
+			<PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
+		</PackageReference>
+		<PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+		<PackageReference Include="DialogHost.Avalonia" Version="0.12.3" />
+		<PackageReference Include="FluentIcons.Avalonia" Version="2.1.341" />
+		<PackageReference Include="LibGit2Sharp" Version="0.32.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.12" />
+		<PackageReference Include="System.Management" Version="10.0.11" />
+		<PackageReference Include="TagLibSharp" Version="2.3.0" />
+		<PackageReference Include="Usb.Events" Version="100.0.0.1" />
+		<PackageReference Include="YoutubeDLSharp" Version="1.2.0" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <Watch Include="**/*.cs" Exclude="bin\**;obj\**;.git\**;node_modules\**" />
-  </ItemGroup>
+	<ItemGroup>
+		<Watch Include="**/*.cs" Exclude="bin\**;obj\**;.git\**;node_modules\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<AvaloniaResource Include="Assets\**" />
+	</ItemGroup>
 </Project>

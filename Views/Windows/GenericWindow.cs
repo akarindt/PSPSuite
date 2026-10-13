@@ -51,6 +51,13 @@ public abstract class GenericWindow : Window
     protected abstract void BuildUI();
     protected abstract void SubscribeModuleEvents();
     protected abstract void OnSendToQueueRequested(object? sender, IList items);
-    protected virtual async Task InitAsync() => await Task.CompletedTask;
-    protected virtual void Init() { }
+    protected virtual async Task InitAsync()
+    {
+        this.LoadIcon();
+        await Task.CompletedTask;
+    }
+    protected virtual void Init()
+    {
+        this.LoadIcon();
+    }
 }

@@ -29,7 +29,7 @@ public class BgutilYtdlpPotProvider : DependencyItem
         string baseDir = Constants.DEPENDENCIES_FOLDER;
         Console.WriteLine("[BgutilYtdlpPotProvider_DownloadItemAsync]::Pulling repo...");
 
-        await Task.Run(async () =>
+        await Task.Run(() =>
         {
             Repository.Clone(DownloadUrl, _combinedPath);
 
