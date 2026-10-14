@@ -98,6 +98,5 @@ class Program
         }
 
         services.AddTransient<IDependencyLoader, DependencyLoader>();
-        services.AddTransient<MainWindow>();
     }
 }
