@@ -55,7 +55,6 @@ public partial class Playlist
         if (string.IsNullOrEmpty(GlobalVar.CookiesTxtFilePath)) return;
         if (string.IsNullOrEmpty(_urlTextBox.Text)) return;
 
-
         string unfilteredUrl = _urlTextBox.Text.Trim();
         if (!FnHelper.IsUrl(unfilteredUrl)) return;
 

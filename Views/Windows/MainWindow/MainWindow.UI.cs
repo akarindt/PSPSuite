@@ -38,7 +38,7 @@ public partial class MainWindow : GenericWindow
     private enum RootGridSpanColSetting
     {
         LOG_PANEL = 3,
-        H_SPLITTER = 3,
+        H_SPLITTER = 2,
     }
 
     private enum PathContainerRowSetting
@@ -85,7 +85,7 @@ public partial class MainWindow : GenericWindow
     private Panel _cornerFiller = new();
     private Grid _rootGrid = new();
     private Grid _pathContainer = new();
-    private TextBox _drivePath = new();
+    private ComboBox _drivePath = new();
     private Button _browseBtn = new();
     private DockPanel _mainDock = new();
 
@@ -278,13 +278,10 @@ public partial class MainWindow : GenericWindow
             Margin = PATH_CONTAINER_MARGIN_THICKNESS
         };
 
-        _drivePath = new TextBox
+        _drivePath = new ComboBox
         {
             VerticalAlignment = VerticalAlignment.Center,
-            IsReadOnly = true,
-            Focusable = false,
-            IsTabStop = false,
-            IsHitTestVisible = false,
+            HorizontalAlignment = HorizontalAlignment.Stretch,
             Background = Constants.PRIMARY_BACKGROUND_COLOR
         };
 

@@ -20,8 +20,8 @@ public static class UsbWatcher
 {
     private static bool _isInitialized;
     private static IUsbEventWatcher? _usbEventWatcher;
-    public static event Action<string>? OnPspPathChanged;
-    public static string CurrentPspPath { get; private set; } = string.Empty;
+    public static event Action<string[]>? OnPspPathChanged;
+    public static string[] CurrentPspPaths { get; private set; } = [];
     public static PspContentCategory ActiveCategory { get; private set; } = PspContentCategory.MUSIC;
     public static void InitUsbListener()
     {
@@ -64,42 +64,27 @@ public static class UsbWatcher
         Console.WriteLine($"[UsbWatcher_UpdateAndNotifyPath]::Category={category}");
 #endif
 
-        var newPath = CheckAndGetPspPath(category);
-        if (CurrentPspPath != newPath)
+        var newPaths = CheckAndGetPspPaths(category);
+        if (!CurrentPspPaths.SequenceEqual(newPaths))
         {
-            CurrentPspPath = newPath;
-            OnPspPathChanged?.Invoke(CurrentPspPath);
+            CurrentPspPaths = newPaths;
+            OnPspPathChanged?.Invoke(CurrentPspPaths);
         }
     }
 
-    public static string CheckAndGetPspPath(PspContentCategory category)
+    public static string[] CheckAndGetPspPaths(PspContentCategory category)
     {
         var removableDrives = DriveInfo.GetDrives()
             .Where(d => (d.DriveType == DriveType.Removable || d.DriveType == DriveType.Fixed) && d.IsReady);
 
-        foreach (var drive in removableDrives)
-        {
-            string basePath = drive.RootDirectory.FullName;
+        string folder = category == PspContentCategory.VIDEO ? "VIDEO" : "MUSIC";
 
-            if (category == PspContentCategory.MUSIC)
-            {
-                string pspMusicPath = Path.Combine(basePath, "PSP", "MUSIC");
-                string rootMusicPath = Path.Combine(basePath, "MUSIC");
-
-                if (Directory.Exists(pspMusicPath)) return pspMusicPath;
-                if (Directory.Exists(rootMusicPath)) return rootMusicPath;
-            }
-            else if (category == PspContentCategory.VIDEO)
-            {
-                string pspVideoPath = Path.Combine(basePath, "PSP", "VIDEO");
-                string rootVideoPath = Path.Combine(basePath, "VIDEO");
-
-                if (Directory.Exists(pspVideoPath)) return pspVideoPath;
-                if (Directory.Exists(rootVideoPath)) return rootVideoPath;
-            }
-        }
-
-        return string.Empty;
+        // One path per drive: PSP\<folder> preferred over root <folder>
+        return removableDrives
+            .Select(d => d.RootDirectory.FullName)
+            .Select(basePath => new[] { Path.Combine(basePath, "PSP", folder), Path.Combine(basePath, folder) }.FirstOrDefault(Directory.Exists))
+            .OfType<string>()
+            .ToArray();
     }
 
     public static void Cleanup()

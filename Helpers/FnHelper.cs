@@ -13,17 +13,6 @@ namespace PSPSuite.Helpers;
 
 public static class FnHelper
 {
-    public static void LoadIcon(this Window window)
-    {
-        var assetUri = new Uri("avares://PSPSuite/Assets/app-icon.ico");
-        using var stream = AssetLoader.Open(assetUri);
-
-        var bitmap = new Bitmap(stream);
-        var newIcon = new WindowIcon(bitmap);
-
-        window.Icon = newIcon;
-    }
-
     public static int GetOperatingSystemChosenFreePort()
     {
         using (var socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp))
@@ -58,7 +47,6 @@ public static class FnHelper
         }
     }
 
-
     public static void DeleteAllContent(string folderPath)
     {
         if (!Directory.Exists(folderPath)) return;
@@ -74,7 +62,6 @@ public static class FnHelper
             dir.Delete(true);
         }
     }
-
 
     public static void CopyDirectoryContents(string sourceDir, string targetDir)
     {
@@ -96,13 +83,11 @@ public static class FnHelper
         }
     }
 
-
     public static bool IsDirectoryEmpty(string path)
     {
         if (!Directory.Exists(path)) return true;
         return !Directory.EnumerateFileSystemEntries(path).Any();
     }
-
 
     public static string GetDenoBinary()
     {
@@ -152,7 +137,6 @@ public static class FnHelper
                  .Replace('Đ', 'D')
                  .Replace('đ', 'd');
     }
-
 
     public static string CleanTitleForFolder(string title, int maxLength = 100)
     {

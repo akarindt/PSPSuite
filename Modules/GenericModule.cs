@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace PSPSuite.Modules;
 
-public abstract class GenericModule : UserControl
+public abstract partial class GenericModule : UserControl
 {
     public event EventHandler<IList>? SendToQueueRequested;
 

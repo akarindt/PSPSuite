@@ -22,14 +22,21 @@ public partial class MainWindow
 
     public MainWindow(IDependencyLoader depLoader, IEnumerable<GenericModule> modules)
     {
-        _drivePath.Text = UsbWatcher.CurrentPspPath;
-        UsbWatcher.OnPspPathChanged += (path) =>
-        {
-            _drivePath.Text = path;
-        };
+        SetDrivePaths(UsbWatcher.CurrentPspPaths);
+        UsbWatcher.OnPspPathChanged += SetDrivePaths;
 
         _depLoader = depLoader;
         _modules = modules;
+    }
+
+    private string DrivePath => _drivePath.SelectedItem as string ?? string.Empty;
+
+    private void SetDrivePaths(string[] paths)
+    {
+        var selected = DrivePath;
+        _drivePath.Items.Clear();
+        foreach (var path in paths) _drivePath.Items.Add(path);
+        _drivePath.SelectedItem = paths.Contains(selected) ? selected : paths.FirstOrDefault();
     }
 
     protected override async Task InitAsync()
@@ -49,7 +56,6 @@ public partial class MainWindow
                 _logTextBlock.ScrollToEnd();
             });
         }));
-
 
         UsbWatcher.InitUsbListener();
         this.SubscribeModuleEvents();
@@ -72,9 +78,10 @@ public partial class MainWindow
 
         var folder = folders.FirstOrDefault();
         if (folder == null) return;
-        _drivePath.Text = Uri.UnescapeDataString(folder.GetLocalPath());
+        var picked = Uri.UnescapeDataString(folder.GetLocalPath());
+        if (!_drivePath.Items.Contains(picked)) _drivePath.Items.Add(picked);
+        _drivePath.SelectedItem = picked;
     }
-
 
     public async Task CookiesBrowseBtn_Clicked(object? sender, RoutedEventArgs e)
     {
@@ -101,13 +108,13 @@ public partial class MainWindow
             return false;
         }
 
-        if (_drivePath.Text == null || _drivePath.Text.Trim() == "")
+        if (DrivePath.Trim() == "")
         {
             await MessageBox.Err("Error", "Drive path is empty!");
             return false;
         }
 
-        if (!Directory.Exists(_drivePath.Text.Trim()))
+        if (!Directory.Exists(DrivePath.Trim()))
         {
             await MessageBox.Err("Error", "Drive path not found!");
             return false;
@@ -123,159 +130,36 @@ public partial class MainWindow
         if (_mainTabControl.SelectedContent is Video) await SendVideo();
     }
 
+    private string GetOutputFolder() => DrivePath.Trim().TrimEnd('\\');
+
+    private static bool IsCookiesFileValid(string? cookiesFile) => !string.IsNullOrWhiteSpace(cookiesFile) && File.Exists(cookiesFile);
+
+    private void ShowCookiesNotFound() => Dispatcher.Post(async () => await MessageBox.Err("Error", "cookies.txt not found!"));
+
     private async Task SendVideo()
     {
         if (!await CheckSend()) return;
 
         var localList = _queueListData.Where(x => x.IsLocal).ToList();
         var ytList = _queueListData.Where(x => !x.IsLocal).ToList();
-
-#pragma warning disable CS8602
-        string outputFolder = _drivePath.Text.Trim().TrimEnd('\\');
+        string outputFolder = GetOutputFolder();
         string cookiesFile = GlobalVar.CookiesTxtFilePath;
-#pragma warning restore CS8602
 
         if (localList.Count > 0)
         {
-            await Task.Run(() =>
-            {
-                foreach (var file in localList)
-                {
-                    if (!File.Exists(file.FilePath)) continue;
-                    Directory.CreateDirectory(Path.Combine(outputFolder, file.FolderName));
-
-                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
-                    string extension = Path.GetExtension(file.FilePath);
-                    string cleanFileName = FnHelper.NormalizeText(fileNameWithoutExt) + extension;
-                    string targetFilePath = Path.Combine(outputFolder, file.FolderName, cleanFileName);
-
-                    if (File.Exists(targetFilePath)) continue;
-                    var isVideo = Constants.VIDEO_PATTERNS.Contains(extension);
-                    if (!isVideo) continue;
-
-                    using var ffmpegProcess = new Process
-                    {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = Constants.FFMPEG_PATH,
-                            Arguments = $"-y -i {file.FilePath} -vf \"scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2\" -c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -b:v 768k -ar 44100 -ac 2 -b:a 128k {targetFilePath}",
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                            StandardOutputEncoding = Encoding.UTF8,
-                            StandardErrorEncoding = Encoding.UTF8
-                        }
-                    };
-
-                    ffmpegProcess.OutputDataReceived += (s, e) =>
-                    {
-                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendVideo]::FFmpeg process - {e.Data}");
-                    };
-
-                    ffmpegProcess.ErrorDataReceived += (s, e) =>
-                    {
-                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendVideo]::FFmpeg process - {e.Data}");
-                    };
-
-                    ffmpegProcess.Start();
-                    ffmpegProcess.BeginOutputReadLine();
-                    ffmpegProcess.BeginErrorReadLine();
-                    ffmpegProcess.WaitForExit();
-
-                }
-            });
+            await Task.Run(() => ConvertLocalVideos(localList, outputFolder));
             Console.WriteLine($"[MainWindow_SendVideo]::Done");
         }
 
-
-        if (ytList.Count > 0)
+        if (ytList.Count <= 0) return;
+        if (!IsCookiesFileValid(cookiesFile))
         {
-            await Task.Run(() =>
-            {
-                if (string.IsNullOrWhiteSpace(cookiesFile) || !File.Exists(cookiesFile))
-                {
-                    Dispatcher.Post(async () => await MessageBox.Err("Error", "cookies.txt not found!"));
-                    return;
-                }
-                string tempYtDir = Path.Combine(outputFolder, "_temp_yt");
-                Directory.CreateDirectory(tempYtDir);
-
-                string linkTxtPath = Path.Combine(tempYtDir, "links.txt");
-                File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, ytList.Select(x => x.FilePath)));
-
-                string ytOutputFormat = Path.Combine(tempYtDir, "%(title)s.tmp.%(ext)s");
-                using var ytProcess = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = Constants.YTDLP_PATH,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        StandardOutputEncoding = Encoding.UTF8,
-                        StandardErrorEncoding = Encoding.UTF8,
-                        Arguments = $"-f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" " +
-                                    $"--merge-output-format mp4 " +
-                                    $"-a \"{linkTxtPath}\" " +
-                                    $"--cookies \"{cookiesFile}\" " +
-                                    $"--postprocessor-args \"ffmpeg:-c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -vf scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2 -b:v 768k -c:a aac -ac 2 -b:a 128k -ar 48000\" " +
-                                    $"-o \"{ytOutputFormat}\" " +
-                                    $"--sleep-requests 1 " +
-                                    $"--extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\""
-                    }
-                };
-
-                ytProcess.OutputDataReceived += (s, e) =>
-                {
-                    if (e.Data != null) Console.WriteLine($"[MainWindow_SendVideo]::YTDLP process - {e.Data}");
-                };
-
-                ytProcess.ErrorDataReceived += (s, e) =>
-                {
-                    if (e.Data != null) Console.WriteLine($"[MainWindow_SendVideo]::YTDLP process - {e.Data}");
-                };
-
-                ytProcess.Start();
-                ytProcess.BeginOutputReadLine();
-                ytProcess.BeginErrorReadLine();
-                ytProcess.WaitForExit();
-
-                if (File.Exists(linkTxtPath)) File.Delete(linkTxtPath);
-                var tmpFiles = Directory.EnumerateFiles(tempYtDir, "*.tmp.mp4").ToList();
-                for (int i = 0; i < tmpFiles.Count; i++)
-                {
-                    string tmpFile = tmpFiles[i];
-                    string folderName = (i < ytList.Count) ? ytList[i].FolderName : ytList.Last().FolderName;
-                    string targetDir = Path.Combine(outputFolder, folderName);
-                    Directory.CreateDirectory(targetDir);
-
-                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(tmpFile);
-                    string cleanFileName = fileNameWithoutExt.Substring(0, fileNameWithoutExt.Length - 4);
-                    cleanFileName = FnHelper.NormalizeText(cleanFileName);
-
-                    string finalFileName = cleanFileName + ".mp4";
-                    string finalFilePath = Path.Combine(targetDir, finalFileName);
-
-                    if (File.Exists(finalFilePath))
-                    {
-                        File.Delete(tmpFile);
-                        continue;
-                    }
-                    File.Move(tmpFile, finalFilePath);
-                }
-
-                try
-                {
-                    if (Directory.Exists(tempYtDir)) Directory.Delete(tempYtDir, true);
-                }
-                catch { }
-
-                Console.WriteLine($"[MainWindow_SendVideo]::YouTube Done");
-            });
+            ShowCookiesNotFound();
+            return;
         }
-        return;
+
+        await Task.Run(() => DownloadYtVideos(ytList, outputFolder, cookiesFile));
+        Console.WriteLine($"[MainWindow_SendVideo]::YouTube Done");
     }
 
     private async Task SendMusic()
@@ -284,229 +168,204 @@ public partial class MainWindow
 
         var localList = _queueListData.Where(x => x.IsLocal).ToList();
         var ytList = _queueListData.Where(x => !x.IsLocal).ToList();
-
-#pragma warning disable CS8602
-        string outputFolder = _drivePath.Text.Trim().TrimEnd('\\');
+        string outputFolder = GetOutputFolder();
         string cookiesFile = GlobalVar.CookiesTxtFilePath;
-#pragma warning restore CS8602
 
         if (localList.Count > 0)
         {
-            await Task.Run(() =>
-            {
-                foreach (var file in localList)
-                {
-                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(file.FilePath);
-                    string extension = Path.GetExtension(file.FilePath);
-                    string cleanFileName = FnHelper.NormalizeText(fileNameWithoutExt) + extension;
-                    string targetFilePath = Path.Combine(outputFolder, cleanFileName);
-
-                    if (File.Exists(targetFilePath)) continue;
-                    var isAudioOnly = !Constants.AUDIO_PATTERNS.Contains(extension);
-                    if (!isAudioOnly) continue;
-
-                    using var ffmpegProcess = new Process
-                    {
-                        StartInfo = new ProcessStartInfo
-                        {
-                            FileName = Constants.FFMPEG_PATH,
-                            Arguments = $"-y -i \"{file.FilePath}\" -map 0:a -map 0:v? -c:v copy -disposition:v attached_pic -b:a 192k \"{targetFilePath}\"",
-                            UseShellExecute = false,
-                            CreateNoWindow = true,
-                            RedirectStandardOutput = true,
-                            RedirectStandardError = true,
-                            StandardOutputEncoding = Encoding.UTF8,
-                            StandardErrorEncoding = Encoding.UTF8
-                        }
-                    };
-
-                    ffmpegProcess.OutputDataReceived += (s, e) =>
-                    {
-                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                    };
-
-                    ffmpegProcess.ErrorDataReceived += (s, e) =>
-                    {
-                        if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                    };
-
-                    ffmpegProcess.Start();
-                    ffmpegProcess.BeginOutputReadLine();
-                    ffmpegProcess.BeginErrorReadLine();
-                    ffmpegProcess.WaitForExit();
-
-                    using (var tfile = TagLib.File.Create(targetFilePath))
-                    {
-                        if (!string.IsNullOrEmpty(tfile.Tag.Title)) tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
-                        if (tfile.Tag.Performers?.Length > 0) tfile.Tag.Performers = tfile.Tag.Performers.Select(FnHelper.NormalizeText).ToArray();
-                        if (tfile.Tag.AlbumArtists?.Length > 0) tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists.Select(FnHelper.NormalizeText).ToArray();
-                        if (!string.IsNullOrEmpty(tfile.Tag.Album)) tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
-                        tfile.Save();
-                    }
-                }
-
-                Console.WriteLine($"[MainWindow_SendMusic]::Done");
-            });
+            await Task.Run(() => ConvertLocalMusic(localList, outputFolder));
+            Console.WriteLine($"[MainWindow_SendMusic]::Done");
         }
 
-        if (ytList.Count > 0)
+        if (ytList.Count <= 0) return;
+        if (!IsCookiesFileValid(cookiesFile))
         {
-            await Task.Run(() =>
-            {
-                if (!File.Exists(cookiesFile) || cookiesFile == null || cookiesFile.Trim() == "")
-                {
-                    Dispatcher.Post(async () => await MessageBox.Err("Error", "cookies.txt not found!"));
-                    return;
-                }
-
-                string linkTxtPath = Path.Combine(outputFolder, "links.txt");
-                File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, ytList.Select(x => x.FilePath)));
-
-                string ytOutputFormat = Path.Combine(outputFolder, "%(title)s.tmp.%(ext)s");
-                using var ytProcess = new Process
-                {
-                    StartInfo = new ProcessStartInfo
-                    {
-                        FileName = Constants.YTDLP_PATH,
-                        UseShellExecute = false,
-                        CreateNoWindow = true,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        StandardOutputEncoding = Encoding.UTF8,
-                        StandardErrorEncoding = Encoding.UTF8,
-                        Arguments = $"-f \"ba/b\" -i -x --audio-format mp3 -a \"{linkTxtPath}\" --cookies \"{cookiesFile}\" --audio-quality 192K --embed-thumbnail --convert-thumbnails jpg --ppa \"ThumbnailsConvertor+ffmpeg:-vf scale=-1:300,crop=300:300\" --add-metadata -o \"{ytOutputFormat}\" --sleep-requests 1 --parse-metadata \"YT Music:%(album_artist)s\" --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\""
-                    }
-                };
-
-                ytProcess.OutputDataReceived += (s, e) =>
-                {
-                    if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                };
-
-                ytProcess.ErrorDataReceived += (s, e) =>
-                {
-                    if (e.Data != null) Console.WriteLine($"[MainWindow_SendMusic]::FFmpeg process - {e.Data}");
-                };
-
-                ytProcess.Start();
-                ytProcess.BeginOutputReadLine();
-                ytProcess.BeginErrorReadLine();
-
-                ytProcess.WaitForExit();
-
-                File.Delete(linkTxtPath);
-
-                var tmpFiles = Directory.EnumerateFiles(outputFolder, "*.tmp.mp3").ToList();
-                foreach (var tmpFile in tmpFiles)
-                {
-                    string fileNameWithoutExt = Path.GetFileNameWithoutExtension(tmpFile);
-                    string cleanFileName = fileNameWithoutExt.Substring(0, fileNameWithoutExt.Length - 4);
-                    cleanFileName = FnHelper.NormalizeText(cleanFileName);
-                    string finalFileName = cleanFileName + ".mp3";
-                    string finalFilePath = Path.Combine(outputFolder, finalFileName);
-
-                    if (File.Exists(finalFilePath)) continue;
-
-                    using (var tfile = TagLib.File.Create(tmpFile))
-                    {
-                        if (!string.IsNullOrEmpty(tfile.Tag.Title)) tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
-                        if (tfile.Tag.Performers?.Length > 0) tfile.Tag.Performers = tfile.Tag.Performers.Select(FnHelper.NormalizeText).ToArray();
-                        if (tfile.Tag.AlbumArtists?.Length > 0) tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists.Select(FnHelper.NormalizeText).ToArray();
-                        if (!string.IsNullOrEmpty(tfile.Tag.Album)) tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
-                        tfile.Save();
-                    }
-
-                    File.Move(tmpFile, finalFilePath);
-                }
-
-                Console.WriteLine($"[MainWindow_SendMusic]::Done");
-            });
+            ShowCookiesNotFound();
+            return;
         }
 
-        return;
+        await Task.Run(() => DownloadYtAudio(ytList.Select(x => x.FilePath), outputFolder, cookiesFile, "[MainWindow_SendMusic]::FFmpeg process"));
+        Console.WriteLine($"[MainWindow_SendMusic]::Done");
     }
 
     private async Task SendPlaylist()
     {
         if (!await CheckSend()) return;
-        if (!File.Exists(GlobalVar.CookiesTxtFilePath) || GlobalVar.CookiesTxtFilePath == null || GlobalVar.CookiesTxtFilePath.Trim() == "")
+        if (!IsCookiesFileValid(GlobalVar.CookiesTxtFilePath))
         {
             await MessageBox.Err("Error", "cookies.txt not found!");
             return;
         }
 
-        string ytdlpPath = Path.Combine(Constants.DEPENDENCIES_FOLDER, YoutubeDLSharp.Utils.YtDlpBinaryName);
-#pragma warning disable CS8602
-        string outputFolder = _drivePath.Text.Trim().TrimEnd('\\');
+        string outputFolder = GetOutputFolder();
         string cookiesFile = GlobalVar.CookiesTxtFilePath;
-#pragma warning restore CS8602
+        var urls = _queueListData.Select(x => x.FilePath).ToList();
 
-        string linkTxtPath = Path.Combine(outputFolder, "links.txt");
-        File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, _queueListData.Select(x => x.FilePath)));
-
-        await Task.Run(() =>
-        {
-            string ytOutputFormat = Path.Combine(outputFolder, "%(title)s.tmp.%(ext)s");
-
-            using var ytProcess = new Process
-            {
-                StartInfo = new ProcessStartInfo
-                {
-                    FileName = ytdlpPath,
-                    UseShellExecute = false,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    StandardOutputEncoding = Encoding.UTF8,
-                    StandardErrorEncoding = Encoding.UTF8,
-                    Arguments = $"-f \"ba/b\" -i -x --audio-format mp3 -a \"{linkTxtPath}\" --cookies \"{cookiesFile}\" --audio-quality 192K --embed-thumbnail --convert-thumbnails jpg --ppa \"ThumbnailsConvertor+ffmpeg:-vf scale=-1:300,crop=300:300\" --add-metadata -o \"{ytOutputFormat}\" --sleep-requests 1 --parse-metadata \"YT Music:%(album_artist)s\" --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\""
-                }
-            };
-
-            ytProcess.OutputDataReceived += (s, e) =>
-            {
-                if (e.Data != null) Console.WriteLine($"[MainWindow_SendPlaylist]::YTDlp process - {e.Data}");
-            };
-
-            ytProcess.ErrorDataReceived += (s, e) =>
-            {
-                if (e.Data != null) Console.WriteLine($"[MainWindow_SendPlaylist]::YTDlp process - {e.Data}");
-            };
-
-            ytProcess.Start();
-            ytProcess.BeginOutputReadLine();
-            ytProcess.BeginErrorReadLine();
-
-            ytProcess.WaitForExit();
-
-            File.Delete(linkTxtPath);
-
-            var tmpFiles = Directory.EnumerateFiles(outputFolder, "*.tmp.mp3").ToList();
-            foreach (var tmpFile in tmpFiles)
-            {
-                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(tmpFile);
-                string cleanFileName = fileNameWithoutExt.Substring(0, fileNameWithoutExt.Length - 4);
-                cleanFileName = FnHelper.NormalizeText(cleanFileName);
-                string finalFileName = cleanFileName + ".mp3";
-                string finalFilePath = Path.Combine(outputFolder, finalFileName);
-
-                if (File.Exists(finalFilePath)) continue;
-
-                using (var tfile = TagLib.File.Create(tmpFile))
-                {
-                    if (!string.IsNullOrEmpty(tfile.Tag.Title)) tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
-                    if (tfile.Tag.Performers?.Length > 0) tfile.Tag.Performers = tfile.Tag.Performers.Select(FnHelper.NormalizeText).ToArray();
-                    if (tfile.Tag.AlbumArtists?.Length > 0) tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists.Select(FnHelper.NormalizeText).ToArray();
-                    if (!string.IsNullOrEmpty(tfile.Tag.Album)) tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
-                    tfile.Save();
-                }
-
-                File.Move(tmpFile, finalFilePath);
-            }
-
-            Console.WriteLine($"[MainWindow_SendPlaylist]::Done");
-        });
+        await Task.Run(() => DownloadYtAudio(urls, outputFolder, cookiesFile, "[MainWindow_SendPlaylist]::YTDlp process"));
+        Console.WriteLine($"[MainWindow_SendPlaylist]::Done");
     }
+
+    private static void ConvertLocalVideos(List<QueueItem> localList, string outputFolder)
+    {
+        foreach (var file in localList)
+        {
+            if (!File.Exists(file.FilePath)) continue;
+            Directory.CreateDirectory(Path.Combine(outputFolder, file.FolderName));
+
+            string extension = Path.GetExtension(file.FilePath);
+            string cleanFileName = FnHelper.NormalizeText(Path.GetFileNameWithoutExtension(file.FilePath)) + extension;
+            string targetFilePath = Path.Combine(outputFolder, file.FolderName, cleanFileName);
+
+            if (File.Exists(targetFilePath)) continue;
+            if (!Constants.VIDEO_PATTERNS.Contains(extension)) continue;
+
+            RunProcess(Constants.FFMPEG_PATH,
+                $"-y -i \"{file.FilePath}\" -vf \"scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2\" -c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -b:v 768k -ar 44100 -ac 2 -b:a 128k \"{targetFilePath}\"",
+                "[MainWindow_SendVideo]::FFmpeg process");
+        }
+    }
+
+    private static void DownloadYtVideos(List<QueueItem> ytList, string outputFolder, string cookiesFile)
+    {
+        string tempYtDir = Path.Combine(outputFolder, "_temp_yt");
+        Directory.CreateDirectory(tempYtDir);
+
+        string linkTxtPath = Path.Combine(tempYtDir, "links.txt");
+        File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, ytList.Select(x => x.FilePath)));
+
+        string ytOutputFormat = Path.Combine(tempYtDir, "%(title)s.tmp.%(ext)s");
+        RunProcess(Constants.YTDLP_PATH,
+            $"-f \"bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best\" " +
+            $"--merge-output-format mp4 " +
+            $"-a \"{linkTxtPath}\" " +
+            $"--cookies \"{cookiesFile}\" " +
+            $"--postprocessor-args \"ffmpeg:-c:v libx264 -profile:v baseline -level 3.0 -pix_fmt yuv420p -vf scale=480:272:force_original_aspect_ratio=decrease,pad=480:272:(ow-iw)/2:(oh-ih)/2 -b:v 768k -c:a aac -ac 2 -b:a 128k -ar 48000\" " +
+            $"-o \"{ytOutputFormat}\" " +
+            $"--sleep-requests 1 " +
+            $"--extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\"",
+            "[MainWindow_SendVideo]::YTDLP process");
+
+        if (File.Exists(linkTxtPath)) File.Delete(linkTxtPath);
+        MoveDownloadedVideos(ytList, tempYtDir, outputFolder);
+
+        try
+        {
+            if (Directory.Exists(tempYtDir)) Directory.Delete(tempYtDir, true);
+        }
+        catch { }
+    }
+
+    private static void MoveDownloadedVideos(List<QueueItem> ytList, string tempYtDir, string outputFolder)
+    {
+        var tmpFiles = Directory.EnumerateFiles(tempYtDir, "*.tmp.mp4").ToList();
+        for (int i = 0; i < tmpFiles.Count; i++)
+        {
+            string tmpFile = tmpFiles[i];
+            string folderName = (i < ytList.Count) ? ytList[i].FolderName : ytList.Last().FolderName;
+            string targetDir = Path.Combine(outputFolder, folderName);
+            Directory.CreateDirectory(targetDir);
+
+            string finalFilePath = Path.Combine(targetDir, GetCleanNameFromTmp(tmpFile) + ".mp4");
+            if (File.Exists(finalFilePath))
+            {
+                File.Delete(tmpFile);
+                continue;
+            }
+            File.Move(tmpFile, finalFilePath);
+        }
+    }
+
+    private static void ConvertLocalMusic(List<QueueItem> localList, string outputFolder)
+    {
+        foreach (var file in localList)
+        {
+            string extension = Path.GetExtension(file.FilePath);
+            string cleanFileName = FnHelper.NormalizeText(Path.GetFileNameWithoutExtension(file.FilePath)) + extension;
+            string targetFilePath = Path.Combine(outputFolder, cleanFileName);
+
+            if (File.Exists(targetFilePath)) continue;
+            if (Constants.AUDIO_PATTERNS.Contains(extension)) continue;
+
+            RunProcess(Constants.FFMPEG_PATH,
+                $"-y -i \"{file.FilePath}\" -map 0:a -map 0:v? -c:v copy -disposition:v attached_pic -b:a 192k \"{targetFilePath}\"",
+                "[MainWindow_SendMusic]::FFmpeg process");
+            NormalizeTags(targetFilePath);
+        }
+    }
+
+    private static void DownloadYtAudio(IEnumerable<string> urls, string outputFolder, string cookiesFile, string logPrefix)
+    {
+        string linkTxtPath = Path.Combine(outputFolder, "links.txt");
+        File.WriteAllText(linkTxtPath, string.Join(Environment.NewLine, urls));
+
+        string ytOutputFormat = Path.Combine(outputFolder, "%(title)s.tmp.%(ext)s");
+        RunProcess(Constants.YTDLP_PATH,
+            $"-f \"ba/b\" -i -x --audio-format mp3 -a \"{linkTxtPath}\" --cookies \"{cookiesFile}\" --audio-quality 192K --embed-thumbnail --convert-thumbnails jpg --ppa \"ThumbnailsConvertor+ffmpeg:-vf scale=-1:300,crop=300:300\" --add-metadata -o \"{ytOutputFormat}\" --sleep-requests 1 --parse-metadata \"YT Music:%(album_artist)s\" --extractor-args \"youtubepot-bgutilhttp:base_url=http://127.0.0.1:{Constants.POT_SERVER_PORT}\"",
+            logPrefix);
+
+        File.Delete(linkTxtPath);
+
+        var tmpFiles = Directory.EnumerateFiles(outputFolder, "*.tmp.mp3").ToList();
+        foreach (var tmpFile in tmpFiles)
+        {
+            string finalFilePath = Path.Combine(outputFolder, GetCleanNameFromTmp(tmpFile) + ".mp3");
+            if (File.Exists(finalFilePath)) continue;
+
+            NormalizeTags(tmpFile);
+            File.Move(tmpFile, finalFilePath);
+        }
+    }
+
+    // yt-dlp writes "<title>.tmp.<ext>"; drop the ".tmp" marker and normalize the title
+    private static string GetCleanNameFromTmp(string tmpFile)
+    {
+        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(tmpFile);
+        return FnHelper.NormalizeText(fileNameWithoutExt[..^4]);
+    }
+
+    private static void NormalizeTags(string filePath)
+    {
+        using var tfile = TagLib.File.Create(filePath);
+        if (!string.IsNullOrEmpty(tfile.Tag.Title)) tfile.Tag.Title = FnHelper.NormalizeText(tfile.Tag.Title);
+        if (tfile.Tag.Performers?.Length > 0) tfile.Tag.Performers = tfile.Tag.Performers.Select(FnHelper.NormalizeText).ToArray();
+        if (tfile.Tag.AlbumArtists?.Length > 0) tfile.Tag.AlbumArtists = tfile.Tag.AlbumArtists.Select(FnHelper.NormalizeText).ToArray();
+        if (!string.IsNullOrEmpty(tfile.Tag.Album)) tfile.Tag.Album = FnHelper.NormalizeText(tfile.Tag.Album);
+        tfile.Save();
+    }
+
+    private static void RunProcess(string fileName, string arguments, string logPrefix)
+    {
+        using var process = new Process
+        {
+            StartInfo = new ProcessStartInfo
+            {
+                FileName = fileName,
+                Arguments = arguments,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            }
+        };
+
+        process.OutputDataReceived += (s, e) =>
+        {
+            if (e.Data != null) Console.WriteLine($"{logPrefix} - {e.Data}");
+        };
+
+        process.ErrorDataReceived += (s, e) =>
+        {
+            if (e.Data != null) Console.WriteLine($"{logPrefix} - {e.Data}");
+        };
+
+        process.Start();
+        process.BeginOutputReadLine();
+        process.BeginErrorReadLine();
+        process.WaitForExit();
+    }
+
     private void Clean(object? sender, EventArgs e)
     {
         this.Closed -= Clean;

@@ -126,7 +126,6 @@ public class BgutilYtdlpPotProvider : DependencyItem
         _serverProcess.BeginOutputReadLine();
     }
 
-
     private void StopServer()
     {
         if (_serverProcess != null && !_serverProcess.HasExited)

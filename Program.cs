@@ -49,7 +49,6 @@ class Program
             })
             .SetupWithLifetime(lifetime);
 
-
         lifetime.MainWindow = Services.GetRequiredService<MainWindow>();
         lifetime.Start(args);
     }

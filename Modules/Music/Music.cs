@@ -17,10 +17,7 @@ namespace PSPSuite.Modules;
 
 public partial class Music
 {
-    public Music()
-    {
-
-    }
+    public Music() { }
 
     private void ToQueueBtn_Clicked(object? sender, RoutedEventArgs args)
     {
@@ -81,7 +78,7 @@ public partial class Music
                 }
                 catch
                 {
-
+                    // Unreadable tags: keep the file name and placeholder artist/album
                 }
 
                 return new Media
@@ -190,7 +187,6 @@ public partial class Music
         }
     }
 
-
     protected override async Task InitAsync()
     {
         _clearListBtn.Click += ClearListBtn_Clicked;
@@ -201,6 +197,5 @@ public partial class Music
         _searchBtn.Click += async (s, e) => await SearchBtn_Clicked(s, e);
 
         await base.InitAsync();
-
     }
 }
