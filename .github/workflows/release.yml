@@ -4,6 +4,9 @@ on:
   push:
     branches: [master, main]
 
+permissions:
+  contents: write # needed to create releases and tags
+
 jobs:
   publish:
     runs-on: ubuntu-latest
@@ -26,7 +29,9 @@ jobs:
       - name: Zip
         run: cd out/${{ matrix.rid }} && zip -r ../../PSPSuite-${{ matrix.rid }}.zip .
 
-      - uses: actions/upload-artifact@v4
+      - uses: softprops/action-gh-release@v2
         with:
-          name: PSPSuite-${{ matrix.rid }}
-          path: PSPSuite-${{ matrix.rid }}.zip
+          tag_name: build-${{ github.run_number }}
+          name: Build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          files: PSPSuite-${{ matrix.rid }}.zip
