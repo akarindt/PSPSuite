@@ -1,0 +1,51 @@
+name: Release build
+
+on:
+  push:
+    branches: [master, main, release]
+
+jobs:
+  publish:
+    runs-on: docker
+    container:
+      image: node:20-bookworm
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # release branch always builds; master/main only when code changed
+      - name: Check changes
+        id: changes
+        run: |
+          before="${{ github.event.before }}"
+          if [ "${{ github.ref_name }}" = release ] || ! git cat-file -e "$before" 2>/dev/null \
+             || git diff --name-only "$before" "${{ github.sha }}" | grep -qE '\.(cs|axaml|csproj|sln|manifest)$|^Assets/'; then
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - if: steps.changes.outputs.build == 'true'
+        uses: https://github.com/actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      # Same format as BuildStamp in PSPSuite.csproj; passed in so the zip name matches the binary's version
+      - name: Publish
+        if: steps.changes.outputs.build == 'true'
+        run: |
+          stamp=$(date -u +%y%m%d%H%M%S)
+          echo "BUILD_STAMP=$stamp" >> "$GITHUB_ENV"
+          dotnet publish PSPSuite.csproj -c Release -r win-x64 \
+            --self-contained true -p:PublishReadyToRun=true -p:PublishSingleFile=false \
+            -p:BuildStamp=$stamp -o out
+          apt-get update -qq && apt-get install -y -qq zip
+          mkdir -p dist/release
+          cd out && zip -qr ../dist/release/PSPSuite-$stamp-win-x64.zip .
+
+      - if: steps.changes.outputs.build == 'true'
+        uses: https://code.forgejo.org/actions/forgejo-release@v2
+        with:
+          direction: upload
+          tag: PSPSuite-${{ env.BUILD_STAMP }}
+          title: PSPSuite-${{ env.BUILD_STAMP }}
+          release-dir: dist/release
