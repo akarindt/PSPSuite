@@ -20,18 +20,23 @@ jobs:
         with:
           dotnet-version: 9.0.x
 
+      # Same format as BuildStamp in PSPSuite.csproj; passed in so the zip name matches the binary's version
+      - name: Stamp
+        run: echo "BUILD_STAMP=$(date -u +%y%m%d%H%M%S)" >> "$GITHUB_ENV"
+
       - name: Publish
         run: >
           dotnet publish PSPSuite.csproj -c Release -r ${{ matrix.rid }}
           --self-contained true -p:PublishReadyToRun=true -p:PublishSingleFile=false
+          -p:BuildStamp=${{ env.BUILD_STAMP }}
           -o out/${{ matrix.rid }}
 
       - name: Zip
-        run: cd out/${{ matrix.rid }} && zip -r ../../PSPSuite-${{ matrix.rid }}.zip .
+        run: cd out/${{ matrix.rid }} && zip -r ../../PSPSuite-${{ env.BUILD_STAMP }}-${{ matrix.rid }}.zip .
 
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: build-${{ github.run_number }}
           name: Build ${{ github.run_number }}
           target_commitish: ${{ github.sha }}
-          files: PSPSuite-${{ matrix.rid }}.zip
+          files: PSPSuite-${{ env.BUILD_STAMP }}-${{ matrix.rid }}.zip
