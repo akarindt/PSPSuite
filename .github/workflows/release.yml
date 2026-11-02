@@ -1,0 +1,32 @@
+name: Release build
+
+on:
+  push:
+    branches: [master, main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rid: [win-x64]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Publish
+        run: >
+          dotnet publish PSPSuite.csproj -c Release -r ${{ matrix.rid }}
+          --self-contained true -p:PublishReadyToRun=true -p:PublishSingleFile=false
+          -o out/${{ matrix.rid }}
+
+      - name: Zip
+        run: cd out/${{ matrix.rid }} && zip -r ../../PSPSuite-${{ matrix.rid }}.zip .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PSPSuite-${{ matrix.rid }}
+          path: PSPSuite-${{ matrix.rid }}.zip
